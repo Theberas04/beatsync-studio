@@ -14,6 +14,7 @@ CTID="${1:-${CTID:-}}"
 TOKEN="${CF_TUNNEL_TOKEN:-}"
 SITE_DIR="/var/www/beatsync"
 
+ok_()  { printf '\033[1;32m[ok]\033[0m %s\n' "$*"; }
 log()  { printf '\033[1;36m==>\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33m[!]\033[0m %s\n' "$*" >&2; }
 die()  { printf '\033[1;31m[fout]\033[0m %s\n' "$*" >&2; exit 1; }
@@ -43,17 +44,21 @@ if [ "${#TOKEN}" -lt 40 ]; then
 fi
 
 # ----------------------------- nginx-origin ------------------------------
-log "Controleren of de loopback-origin (127.0.0.1:8080) bestaat…"
-if pct exec "$CTID" -- grep -q '127.0.0.1:8080' /etc/nginx/sites-available/beatsync 2>/dev/null; then
-  log "Loopback-listener is al aanwezig."
-else
-  log "Loopback-listener toevoegen aan de nginx-site…"
-  # Alleen dit blok toevoegen; de bestaande (TLS of HTTP) config blijft intact.
-  pct exec "$CTID" -- bash -c 'cat >> /etc/nginx/sites-available/beatsync' <<'NGINX'
+# De tunnel mag NOOIT naar poort 80 met een blinde https-redirect wijzen: dat
+# geeft een lus. Daarom zetten we de config die beide gevallen aankan.
+log "Origin-configuratie controleren…"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Cloudflare Tunnel-origin: alleen lokaal bereikbaar, Cloudflare doet TLS.
+if pct exec "$CTID" -- test -f /etc/ssl/beatsync/cert.pem 2>/dev/null; then
+  [ -f "$SCRIPT_DIR/nginx-beatsync.conf" ] || die "nginx-beatsync.conf niet gevonden naast dit script."
+  pct push "$CTID" "$SCRIPT_DIR/nginx-beatsync.conf" /etc/nginx/sites-available/beatsync --perms 644
+  log "Config geplaatst: poort 80 proxy-bewust, 443 met TLS, 8080 voor de tunnel."
+else
+  warn "Geen TLS-certificaat in de container; ik schrijf een HTTP-only config."
+  pct exec "$CTID" -- bash -c 'cat > /etc/nginx/sites-available/beatsync' <<'NGINX'
 server {
-    listen 127.0.0.1:8080;
+    listen 80 default_server;
+    listen [::]:80 default_server;
     server_name _;
 
     root /var/www/beatsync;
@@ -73,12 +78,45 @@ server {
         try_files $uri $uri/ /index.html;
     }
 }
+
+server {
+    listen 127.0.0.1:8080;
+    server_name _;
+
+    root /var/www/beatsync;
+    index index.html;
+
+    location = /healthz {
+        access_log off;
+        default_type text/plain;
+        return 200 "ok\n";
+    }
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
 NGINX
-  pct exec "$CTID" -- nginx -t || die "nginx -t faalde na toevoegen van de 8080-listener."
-  pct exec "$CTID" -- systemctl reload nginx
 fi
-if ! pct exec "$CTID" -- curl -fsS --max-time 5 http://127.0.0.1:8080/healthz 2>/dev/null | grep -q '^ok$'; then
-  warn "De loopback-origin antwoordt niet; controleer 'pct exec $CTID -- nginx -t'."
+
+pct exec "$CTID" -- rm -f /etc/nginx/sites-enabled/default
+pct exec "$CTID" -- ln -sf /etc/nginx/sites-available/beatsync /etc/nginx/sites-enabled/beatsync
+pct exec "$CTID" -- nginx -t || die "nginx -t faalde; configuratie niet geactiveerd."
+pct exec "$CTID" -- systemctl reload nginx
+
+log "Origin testen zoals Cloudflare hem ziet…"
+code80="$(pct exec "$CTID" -- curl -s -o /dev/null -w '%{http_code}' -H 'X-Forwarded-Proto: https' --max-time 5 http://127.0.0.1/ 2>/dev/null | tr -d '\r')"
+code8080="$(pct exec "$CTID" -- curl -s -o /dev/null -w '%{http_code}' --max-time 5 http://127.0.0.1:8080/ 2>/dev/null | tr -d '\r')"
+if [ "$code80" = "200" ]; then
+  ok_ "Poort 80 achter de proxy: 200 (geen redirect-lus)"
+else
+  warn "Poort 80 geeft '$code80' met X-Forwarded-Proto: https (verwacht 200)."
+  warn "Zet de tunnel-dienst op HTTP 127.0.0.1:8080."
+fi
+if [ "$code8080" = "200" ]; then
+  ok_ "Poort 8080 origin: 200"
+else
+  die "De 8080-origin antwoordt met '$code8080'. Controleer: pct exec $CTID -- nginx -t"
 fi
 
 # ----------------------------- cloudflared -------------------------------

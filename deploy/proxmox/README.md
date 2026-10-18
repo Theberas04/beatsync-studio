@@ -102,6 +102,56 @@ Op `http://192.168.1.x` weigert Chrome die functie dus, ook al laadt de pagina p
 Daarom zet het script standaard een self-signed certificaat neer. Je browser waarschuwt
 één keer ("Niet veilig" → **Doorgaan**); daarna werkt de audiokoppeling normaal.
 
+## Publiek bereikbaar maken met Cloudflare Tunnel
+
+Wil je geen LAN-IP maar een echte URL, gebruik dan een Cloudflare Tunnel. Dat kan
+zonder routerwijziging of open poort, en de URL is HTTPS (dus de audiokoppeling werkt).
+
+**1. Tunnel maken (eenmalig, in de browser)**
+
+1. Cloudflare Zero Trust → **Networks → Tunnels → Create a tunnel**.
+2. Kies **Cloudflared**, geef hem een naam.
+3. Kopieer de token uit het commando `cloudflared service install <token>`.
+
+**2. Tunnel in de container zetten**
+
+```bash
+./add-cloudflare-tunnel.sh 102
+# of: CF_TUNNEL_TOKEN='...' ./add-cloudflare-tunnel.sh 102
+```
+
+Het script installeert `cloudflared`, zet de systemd-service op, en controleert of de
+tunnel verbinding maakt met Cloudflare.
+
+**3. Publieke hostname koppelen (in het dashboard)**
+
+Bij de tunnel → **Public Hostname → Add a public hostname**:
+
+- Subdomain: `beatsync`
+- Domain: jouw domein
+- Service: **HTTP**
+- URL: `127.0.0.1:8080`
+
+Daarna is de site bereikbaar op `https://beatsync.jouwdomein.nl`.
+
+Waarom `127.0.0.1:8080`: nginx luistert daarvoor op de loopback-interface, met gewone
+HTTP en zonder redirect. Cloudflare doet de TLS. Zo ontstaat er geen redirect-lus en
+hoef je geen certificaatuitzondering te maken. De LAN-toegang via `https://<container-ip>/`
+blijft gewoon werken.
+
+**Beheer**
+
+```bash
+pct exec 102 -- systemctl status cloudflared
+pct exec 102 -- journalctl -u cloudflared -f
+pct exec 102 -- cloudflared service uninstall    # tunnel stoppen
+```
+
+**Let op:** een publieke hostname is voor iedereen met de link bereikbaar. Wil je het
+afschermen, zet dan **Cloudflare Access** op die hostname (Zero Trust → Access →
+Applications). De token staat in de systemd-unit van `cloudflared`; alleen root in de
+container kan die lezen.
+
 ## Bijwerken
 
 Nieuwe `index.html` in deze map zetten en:

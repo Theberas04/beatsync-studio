@@ -57,6 +57,19 @@ else
   info "Controleer: pct exec $CTID -- nginx -t && pct exec $CTID -- systemctl status nginx --no-pager"
   FAIL=$((FAIL+1))
 fi
+# Cloudflare levert op poort 80 aan; staat daar een blinde https-redirect op,
+# dan krijg je een oneindige lus (301 -> https -> tunnel -> poort 80 -> 301).
+CODE80="$(pct exec "$CTID" -- curl -s -o /dev/null -w '%{http_code}' -H 'X-Forwarded-Proto: https' --max-time 5 http://127.0.0.1/ 2>/dev/null | tr -d '\r')"
+case "$CODE80" in
+  200) ok "Poort 80 achter de proxy: 200 (geen redirect-lus)." ;;
+  301|302) bad "Poort 80 stuurt door naar https terwijl Cloudflare al TLS deed: redirect-lus."
+          info "Oplossing: ./add-cloudflare-tunnel.sh $CTID  (proxy-bewuste config)"
+          info "Of zet de tunnel-dienst op HTTP 127.0.0.1:8080."
+          FAIL=$((FAIL+1)) ;;
+  "") warn "Kon poort 80 niet testen." ;;
+  *)  warn "Poort 80 gaf status $CODE80 (verwacht 200)." ;;
+esac
+
 if pct exec "$CTID" -- test -s "$SITE_DIR/index.html" 2>/dev/null; then
   ok "index.html staat in $SITE_DIR."
 else

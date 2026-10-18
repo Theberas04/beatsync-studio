@@ -135,9 +135,15 @@ Bij de tunnel → **Public Hostname → Add a public hostname**:
 Daarna is de site bereikbaar op `https://beatsync.jouwdomein.nl`.
 
 Waarom `127.0.0.1:8080`: nginx luistert daarvoor op de loopback-interface, met gewone
-HTTP en zonder redirect. Cloudflare doet de TLS. Zo ontstaat er geen redirect-lus en
-hoef je geen certificaatuitzondering te maken. De LAN-toegang via `https://<container-ip>/`
-blijft gewoon werken.
+HTTP en zonder redirect. Cloudflare doet de TLS. De LAN-toegang via
+`https://<container-ip>/` blijft gewoon werken.
+
+**Redirect-lus voorkomen.** Wees niet verleid om de tunnel naar poort 80 te zetten: die
+stuurt normaal door naar https. Omdat Cloudflare de TLS al heeft gedaan, komt de volgende
+aanvraag weer op poort 80 binnen — oneindig door. Daarom is de configuratie nu
+proxy-bewust: nginx kijkt naar `CF-Visitor` / `X-Forwarded-Proto` en serveert de site
+direct als de aanvraag via Cloudflare binnenkomt. Poort 80 én 8080 werken daardoor allebei.
+`check-tunnel.sh` detecteert een lus expliciet.
 
 **Beheer**
 

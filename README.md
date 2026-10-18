@@ -37,6 +37,19 @@ tabblad kiezen en **audio delen** aanvinken. Werkt het beste in Chrome of Edge.
 - Van YouTube-video's kan de audio niet door de pagina worden geanalyseerd. In deze
   versie is YouTube-ondersteuning daarom verwijderd.
 
+## Op Proxmox draaien (LXC met vast IP)
+
+In `deploy/proxmox/` staat een compleet pakket om deze pagina als website te draaien in
+een Debian LXC-container op Proxmox VE, met een statisch 192.168-adres en nginx:
+
+```bash
+cd deploy/proxmox
+cp ../../index.html .
+./create-beatsync-lxc.sh          # als root op de Proxmox-host
+```
+
+Zie `deploy/proxmox/README.md` voor instellingen, HTTPS en probleemoplossing.
+
 ## Licentie
 
 Geen licentiebestand toegevoegd; het project is privé in beheer.

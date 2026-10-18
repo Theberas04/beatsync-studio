@@ -4,6 +4,7 @@
 # levert weer af op poort 80, enzovoort.
 #
 #   bash <(curl -fsSL https://raw.githubusercontent.com/Theberas04/beatsync-studio/main/deploy/proxmox/fix-loop.sh) 102
+#   ... [hostname]   # optioneel: test daarna ook https://<hostname>/ van buitenaf
 #
 # Zelfstandig: heeft geen andere bestanden uit de repo nodig.
 set -uo pipefail
@@ -15,6 +16,25 @@ ok()   { printf '\033[1;32m[ok]\033[0m %s\n' "$*"; }
 bad()  { printf '\033[1;31m[fout]\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33m[!]\033[0m %s\n' "$*"; }
 log()  { printf '     %s\n' "$*"; }
+# Status/body opvragen zonder curl in de container (bash /dev/tcp werkt altijd).
+probe_status() {   # $1=poort  $2=pad  $3=header (optioneel)
+  printf '%s\n' \
+    'exec 3<>/dev/tcp/127.0.0.1/"$1" || exit 9' \
+    'printf "GET %s HTTP/1.0\r\nHost: 127.0.0.1\r\n" "$2" >&3' \
+    '[ -n "$3" ] && printf "%s\r\n" "$3" >&3' \
+    'printf "\r\n" >&3' \
+    'IFS=" " read -r -t 5 _ code _ <&3' \
+    'printf "%s" "$code"' \
+    | pct exec "$CTID" -- bash -s "$1" "${2:-/}" "${3:-}" 2>/dev/null | tr -cd '0-9'
+}
+probe_body() {     # $1=poort  $2=pad
+  printf '%s\n' \
+    'exec 3<>/dev/tcp/127.0.0.1/"$1" || exit 9' \
+    'printf "GET %s HTTP/1.0\r\nHost: 127.0.0.1\r\n" "$2" >&3' \
+    'printf "\r\n" >&3' \
+    'timeout 5 cat <&3' \
+    | pct exec "$CTID" -- bash -s "$1" "${2:-/}" 2>/dev/null
+}
 
 [ "$(id -u)" -eq 0 ] || { bad "Draai dit als root op de Proxmox-host."; exit 1; }
 command -v pct >/dev/null || { bad "pct niet gevonden: dit is geen Proxmox VE-host."; exit 1; }
@@ -22,9 +42,11 @@ pct status "$CTID" >/dev/null 2>&1 || { bad "Container $CTID bestaat niet."; exi
 [ "$(pct status "$CTID")" = "status: running" ] || { bad "Container $CTID draait niet. pct start $CTID"; exit 1; }
 
 echo "== Situatie voor de fix =="
-CODE_BEFORE="$(pct exec "$CTID" -- curl -s -o /dev/null -w '%{http_code}' -H 'X-Forwarded-Proto: https' --max-time 5 http://127.0.0.1/ 2>/dev/null | tr -d '\r')"
+CODE_BEFORE="$(probe_status 80 / "X-Forwarded-Proto: https")"
 log "poort 80 met X-Forwarded-Proto: https -> ${CODE_BEFORE:-geen antwoord}"
-[ "$CODE_BEFORE" = "301" ] || [ "$CODE_BEFORE" = "302" ] && warn "Dat is de lus: 301 naar https terwijl Cloudflare al TLS deed."
+if [ "$CODE_BEFORE" = "301" ] || [ "$CODE_BEFORE" = "302" ]; then
+  warn "Dat is de lus: 301 naar https terwijl Cloudflare al TLS deed."
+fi
 
 if pct exec "$CTID" -- test -s "$SITE" 2>/dev/null; then
   BACKUP="$SITE.bak-$(date +%Y%m%d-%H%M%S)"
@@ -184,26 +206,48 @@ fi
 pct exec "$CTID" -- systemctl reload nginx || { bad "Herladen van nginx faalde."; exit 1; }
 
 echo "== Situatie na de fix =="
-CODE_PROXY="$(pct exec "$CTID" -- curl -s -o /dev/null -w '%{http_code}' -H 'X-Forwarded-Proto: https' --max-time 5 http://127.0.0.1/ 2>/dev/null | tr -d '\r')"
-CODE_CFRAY="$(pct exec "$CTID" -- curl -s -o /dev/null -w '%{http_code}' -H 'CF-Ray: test' --max-time 5 http://127.0.0.1/ 2>/dev/null | tr -d '\r')"
-CODE_LAN="$(pct exec "$CTID" -- curl -s -o /dev/null -w '%{http_code}' --max-time 5 http://127.0.0.1/ 2>/dev/null | tr -d '\r')"
-CODE_8080="$(pct exec "$CTID" -- curl -s -o /dev/null -w '%{http_code}' --max-time 5 http://127.0.0.1:8080/ 2>/dev/null | tr -d '\r')"
-TITLE="$(pct exec "$CTID" -- curl -s --max-time 5 -H 'X-Forwarded-Proto: https' http://127.0.0.1/ 2>/dev/null | grep -o '<title>[^<]*</title>' | head -1)"
+CODE_PROXY="$(probe_status 80 / "X-Forwarded-Proto: https")"
+CODE_CFRAY="$(probe_status 80 / "CF-Ray: 0123456789abcdef-AMS")"
+CODE_LAN="$(probe_status 80 /)"
+CODE_8080="$(probe_status 8080 /)"
+CODE_HEALTH="$(probe_status 8080 /healthz)"
 
-log "via proxy (X-Forwarded-Proto): $CODE_PROXY"
-log "via proxy (CF-Ray):            $CODE_CFRAY"
-log "zonder proxy-headers:          $CODE_LAN  (301 = netjes naar https)"
-log "poort 8080:                    $CODE_8080"
-[ -n "$TITLE" ] && log "pagina: $TITLE"
+log "via proxy (X-Forwarded-Proto): ${CODE_PROXY:-geen antwoord}"
+log "via proxy (CF-Ray):            ${CODE_CFRAY:-geen antwoord}"
+log "zonder proxy-headers:          ${CODE_LAN:-geen antwoord}  (301 = netjes naar https)"
+log "poort 8080:                    ${CODE_8080:-geen antwoord}"
+log "8080 /healthz:                 ${CODE_HEALTH:-geen antwoord}"
 
 FAIL=0
+if [ -z "$CODE_PROXY$CODE_CFRAY$CODE_8080" ]; then
+  bad "Geen enkel antwoord gemeten; bash zonder /dev/tcp of nginx luistert niet."
+  log "Controleer: pct exec $CTID -- ss -lntp | grep -E ':80|:8080'"
+fi
 [ "$CODE_PROXY" = "200" ] || { bad "Proxy-verzoek geeft $CODE_PROXY (verwacht 200)."; FAIL=1; }
 [ "$CODE_CFRAY" = "200" ] || { bad "Verzoek met CF-Ray geeft $CODE_CFRAY (verwacht 200)."; FAIL=1; }
 [ "$CODE_8080" = "200" ]  || { bad "Poort 8080 geeft $CODE_8080 (verwacht 200)."; FAIL=1; }
 
+if [ -n "${2:-}" ] && command -v curl >/dev/null 2>&1; then
+  PUB="$(curl -s -o /tmp/beatsync-pub.html -D /tmp/beatsync-pub.hdr -w '%{http_code}' --max-redirs 0 --max-time 20 "https://$2/" 2>/dev/null)"
+  log "publiek https://$2/ -> ${PUB:-geen antwoord}"
+  if [ "$PUB" = "200" ]; then
+    ok "Publiek bereikbaar."
+    TITLE="$(grep -o '<title>[^<]*</title>' /tmp/beatsync-pub.html 2>/dev/null | head -1)"
+    [ -n "$TITLE" ] && log "pagina: $TITLE"
+  elif [ "$PUB" = "301" ] || [ "$PUB" = "302" ]; then
+    bad "Publiek geeft $PUB: de tunnel wijst nog naar een origin die doorstuurt."
+    log "Zet de tunnel-dienst op HTTP 127.0.0.1:8080."
+    FAIL=$((FAIL+1))
+  elif [ -n "$PUB" ]; then
+    bad "Publiek geeft $PUB."
+    FAIL=$((FAIL+1))
+  fi
+  rm -f /tmp/beatsync-pub.html /tmp/beatsync-pub.hdr
+fi
+
 if [ "$FAIL" -eq 0 ]; then
   ok "De lus is weg: Cloudflare-verkeer wordt nu gewoon geserveerd."
-  log "Test publiek: https://<jouw-hostname>/ — dashboard-dienst: HTTP 127.0.0.1:8080"
+  log "Dashboard-dienst: HTTP 127.0.0.1:8080 (poort 80 werkt nu ook)."
 else
   bad "Er blijven punten over; zie hierboven."
 fi

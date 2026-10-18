@@ -15,6 +15,25 @@ bad()  { printf '\033[1;31m[fout]\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33m[!]\033[0m %s\n' "$*"; }
 info() { printf '     %s\n' "$*"; }
 head_() { printf '\n\033[1;36m%s\033[0m\n' "$*"; }
+# Status/body opvragen zonder curl in de container (bash /dev/tcp werkt altijd).
+probe_status() {   # $1=poort  $2=pad  $3=header (optioneel)
+  printf '%s\n' \
+    'exec 3<>/dev/tcp/127.0.0.1/"$1" || exit 9' \
+    'printf "GET %s HTTP/1.0\r\nHost: 127.0.0.1\r\n" "$2" >&3' \
+    '[ -n "$3" ] && printf "%s\r\n" "$3" >&3' \
+    'printf "\r\n" >&3' \
+    'IFS=" " read -r -t 5 _ code _ <&3' \
+    'printf "%s" "$code"' \
+    | pct exec "$CTID" -- bash -s "$1" "${2:-/}" "${3:-}" 2>/dev/null | tr -cd '0-9'
+}
+probe_body() {     # $1=poort  $2=pad
+  printf '%s\n' \
+    'exec 3<>/dev/tcp/127.0.0.1/"$1" || exit 9' \
+    'printf "GET %s HTTP/1.0\r\nHost: 127.0.0.1\r\n" "$2" >&3' \
+    'printf "\r\n" >&3' \
+    'timeout 5 cat <&3' \
+    | pct exec "$CTID" -- bash -s "$1" "${2:-/}" 2>/dev/null
+}
 
 [ "$(id -u)" -eq 0 ] || { bad "Draai dit als root op de Proxmox-host."; exit 1; }
 [ -n "$CTID" ] || { bad "Gebruik: $0 <container-id> [hostname]"; exit 1; }
@@ -50,7 +69,7 @@ else
   info "Oplossing: ./add-cloudflare-tunnel.sh $CTID  (voegt het blok toe)"
   FAIL=$((FAIL+1))
 fi
-if pct exec "$CTID" -- curl -fsS --max-time 5 http://127.0.0.1:8080/healthz 2>/dev/null | grep -q '^ok$'; then
+if [ "$(probe_status 8080 /healthz)" = "200" ] && probe_body 8080 /healthz | grep -q 'ok'; then
   ok "Origin antwoordt: http://127.0.0.1:8080/healthz"
 else
   bad "Origin 127.0.0.1:8080 antwoordt niet."
@@ -59,14 +78,16 @@ else
 fi
 # Cloudflare levert op poort 80 aan; staat daar een blinde https-redirect op,
 # dan krijg je een oneindige lus (301 -> https -> tunnel -> poort 80 -> 301).
-CODE80="$(pct exec "$CTID" -- curl -s -o /dev/null -w '%{http_code}' -H 'X-Forwarded-Proto: https' --max-time 5 http://127.0.0.1/ 2>/dev/null | tr -d '\r')"
+CODE80="$(probe_status 80 / 'X-Forwarded-Proto: https')"
+CODE80_CF="$(probe_status 80 / 'CF-Ray: 0123456789abcdef-AMS')"
 case "$CODE80" in
-  200) ok "Poort 80 achter de proxy: 200 (geen redirect-lus)." ;;
+  200) ok "Poort 80 achter de proxy: 200 (geen redirect-lus)."
+       [ "$CODE80_CF" = "200" ] && ok "Poort 80 met CF-Ray: 200." || warn "Poort 80 met CF-Ray gaf ${CODE80_CF:-geen antwoord}." ;;
   301|302) bad "Poort 80 stuurt door naar https terwijl Cloudflare al TLS deed: redirect-lus."
           info "Oplossing: ./add-cloudflare-tunnel.sh $CTID  (proxy-bewuste config)"
           info "Of zet de tunnel-dienst op HTTP 127.0.0.1:8080."
           FAIL=$((FAIL+1)) ;;
-  "") warn "Kon poort 80 niet testen." ;;
+  "") warn "Kon poort 80 niet testen (geen antwoord; bash zonder /dev/tcp?)." ;;
   *)  warn "Poort 80 gaf status $CODE80 (verwacht 200)." ;;
 esac
 

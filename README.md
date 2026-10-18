@@ -1,5 +1,7 @@
 # BeatSync Studio
 
+**Live (GitHub Pages):** https://theberas04.github.io/beatsync-studio/  — de pagina draait volledig in je browser.
+
 Een single-file web-app (één `index.html`) waarmee je video's laat meelopen met de beat van audio.
 Alles draait lokaal in je browser: er worden geen bestanden geüpload.
 

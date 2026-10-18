@@ -12,7 +12,33 @@ De container krijgt een **statisch IP** in je 192.168-netwerk en serveert de pag
 | `nginx-beatsync.conf` | nginx-site (HTTP → HTTPS, statische bestanden). |
 | `update-site.sh` | Werkt een bestaande container bij met een nieuwe `index.html`. |
 
+## Installeren met één commando (vanaf GitHub)
+
+Op de Proxmox-host als root:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/Theberas04/beatsync-studio/main/deploy/proxmox/install.sh)
+```
+
+Dit haalt de bestanden op, controleert ze en maakt daarna de container aan.
+Eigen netwerkwaarden meegeven kan op dezelfde regel:
+
+```bash
+STATIC_IP=192.168.2.50/24 GATEWAY=192.168.2.1 \
+  bash <(curl -fsSL https://raw.githubusercontent.com/Theberas04/beatsync-studio/main/deploy/proxmox/install.sh)
+```
+
+Alleen downloaden om te kijken wat er staat (maakt niets aan):
+
+```bash
+FETCH_ONLY=1 bash <(curl -fsSL https://raw.githubusercontent.com/Theberas04/beatsync-studio/main/deploy/proxmox/install.sh)
+```
+
+Let op: gebruik `bash <(curl ...)`, niet `curl ... | bash`. Bij de pijpvorm raakt het
+toetsenbordinvoer kwijt, waardoor de installatie kan blijven hangen.
+
 ## Snelstart
+
 
 Kopieer deze map naar je Proxmox-host (bijvoorbeeld naar `/root/beatsync-proxmox`) en
 voer uit als root:

@@ -1,0 +1,121 @@
+name: Validatie
+
+# Bewaakt dat de app en de Proxmox-installatielink blijven werken.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scripts:
+    name: Shellscripts en installatielink
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Syntaxcontrole alle scripts
+        run: |
+          fail=0
+          for f in $(find . -name '*.sh' -not -path './.git/*'); do
+            if bash -n "$f"; then echo "OK   $f"; else echo "FOUT $f"; fail=1; fi
+          done
+          exit $fail
+
+      - name: Elk script staat in de downloadlijst van install.sh
+        run: |
+          python3 - <<'PY'
+          import re, sys
+          from pathlib import Path
+          install = Path('deploy/proxmox/install.sh').read_text()
+          block = re.search(r'FILES=\((.*?)\)', install, re.S)
+          assert block, "FILES-blok niet gevonden in install.sh"
+          listed = set(re.findall(r'"([^"]+)"', block.group(1)))
+          # Elk script in deploy/proxmox moet gedownload worden (behalve install.sh zelf).
+          scripts = {
+              str(p) for p in Path('deploy/proxmox').glob('*.sh')
+              if p.name != 'install.sh'
+          }
+          not_listed = sorted(scripts - listed)
+          # Elk pad in FILES moet echt bestaan, anders faalt de installatie.
+          missing_on_disk = sorted(x for x in listed if not Path(x).is_file())
+          print("in FILES:", *sorted(listed), sep="\n  ")
+          if not_listed:
+              print("SCRIPT NIET IN FILES:", not_listed, file=sys.stderr)
+          if missing_on_disk:
+              print("PAD BESTAAT NIET:", missing_on_disk, file=sys.stderr)
+          sys.exit(1 if (not_listed or missing_on_disk) else 0)
+          PY
+
+      - name: Installatiescript haalt alle bestanden op (FETCH_ONLY)
+        env:
+          RAW_BASE: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}
+        run: |
+          rm -rf /tmp/beatsync-fetch
+          FETCH_ONLY=1 TARGET_DIR=/tmp/beatsync-fetch bash deploy/proxmox/install.sh
+          echo "--- opgehaald ---"
+          ls -l /tmp/beatsync-fetch
+          test -s /tmp/beatsync-fetch/index.html
+          test -x /tmp/beatsync-fetch/create-beatsync-lxc.sh
+          grep -q 'ip=dhcp' /tmp/beatsync-fetch/create-beatsync-lxc.sh
+          echo "installatielink levert een complete set op"
+
+      - name: README verwijst naar dezelfde installatielink
+        run: |
+          url='https://raw.githubusercontent.com/Theberas04/beatsync-studio/main/deploy/proxmox/install.sh'
+          grep -qF "$url" README.md
+          grep -qF "$url" deploy/proxmox/README.md
+          echo "installatielink in beide READMEs gevonden"
+
+  app:
+    name: HTML en JavaScript
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: JavaScript-syntax
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          s = Path('index.html').read_text()
+          js = s.split('<script>', 1)[1].split('</script>', 1)[0]
+          Path('/tmp/check.js').write_text(js)
+          print(f"{len(js)} tekens JavaScript")
+          PY
+          node --check /tmp/check.js
+
+      - name: Unieke element-IDs en bestaande verwijzingen
+        run: |
+          python3 - <<'PY'
+          import re, sys
+          from html.parser import HTMLParser
+          from pathlib import Path
+          s = Path('index.html').read_text()
+
+          class T(HTMLParser):
+              def __init__(self):
+                  super().__init__(); self.ids = []
+              def handle_starttag(self, tag, attrs):
+                  d = dict(attrs)
+                  if d.get('id'): self.ids.append(d['id'])
+
+          t = T(); t.feed(s)
+          dupes = {i for i in t.ids if t.ids.count(i) > 1}
+          refs = set(re.findall(r"\$\('([^']+)'\)", s)) | set(re.findall(r"getElementById\('([^']+)'\)", s))
+          orphan = sorted(refs - set(t.ids))
+          print(f"ID's: {len(t.ids)}  verwijzingen: {len(refs)}")
+          if dupes: print("dubbele ID's:", dupes, file=sys.stderr)
+          if orphan: print("verwijzingen zonder element:", orphan, file=sys.stderr)
+          sys.exit(1 if (dupes or orphan) else 0)
+          PY
+
+      - name: Geen achtergebleven YouTube-code
+        run: |
+          if grep -qi 'youtube\|ytPlayer\|loadYoutube' index.html; then
+            echo "YouTube-verwijzing gevonden terwijl die verwijderd hoort te zijn" >&2
+            exit 1
+          fi
+          echo "geen YouTube-resten"

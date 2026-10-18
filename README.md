@@ -37,6 +37,16 @@ tabblad kiezen en **audio delen** aanvinken. Werkt het beste in Chrome of Edge.
 - Van YouTube-video's kan de audio niet door de pagina worden geanalyseerd. In deze
   versie is YouTube-ondersteuning daarom verwijderd.
 
+## Installeren op Proxmox met één commando
+
+Op de Proxmox-host als root:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/Theberas04/beatsync-studio/main/deploy/proxmox/install.sh)
+```
+
+Meer opties en probleemoplossing: `deploy/proxmox/README.md`.
+
 ## Op Proxmox draaien (LXC met vast IP)
 
 In `deploy/proxmox/` staat een compleet pakket om deze pagina als website te draaien in

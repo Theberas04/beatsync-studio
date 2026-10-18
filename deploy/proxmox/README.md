@@ -152,6 +152,37 @@ afschermen, zet dan **Cloudflare Access** op die hostname (Zero Trust → Access
 Applications). De token staat in de systemd-unit van `cloudflared`; alleen root in de
 container kan die lezen.
 
+### Let op: hostnaam-diepte en het certificaat
+
+Cloudflare's gratis **Universal SSL** dekt `werdensmedia.com` en `*.werdensmedia.com` —
+dat is één subniveau. Een hostname met twee subniveaus, zoals
+`nep.muziek.werdensmedia.com`, krijgt geen certificaat van die dekking. Het gevolg is
+een TLS-handshake-fout (alert 40) op poort 443, terwijl poort 80 nog wel antwoordt.
+
+Oplossingen:
+
+- **Gratis:** gebruik één subniveau, bijvoorbeeld `nep-werdensmedia.werdensmedia.com`
+  of `nepmuziek.werdensmedia.com`, en zet die als Public Hostname in de tunnel.
+- **Betaald:** zet **Total TLS** of **Advanced Certificate Manager** aan voor de zone;
+  dan worden ook diepere subdomeinen voorzien van een certificaat.
+
+Een **502 Bad Gateway** van Cloudflare betekent iets anders: de tunnel is verbonden,
+maar de origin die bij die hostname hoort antwoordt niet. Meestal staat de service-URL
+verkeerd (bijvoorbeeld `https://127.0.0.1` zonder "No TLS Verify", of een poort waar
+nginx niet luistert). Gebruik `HTTP` + `127.0.0.1:8080`.
+
+### Diagnose draaien
+
+```bash
+./check-tunnel.sh 102 nep.muziek.werdensmedia.com
+```
+
+Het script controleert container, nginx-listener op 8080, origin-health, certificaat,
+de cloudflared-service en de geregistreerde tunnelverbindingen. Het haalt de tunnel-ID
+uit de service en print de dashboard-link. Bij een te diepe hostname of een ontbrekende
+listener meldt het precies wat er moet gebeuren, met een exitcode gelijk aan het aantal
+gevonden problemen.
+
 ## Bijwerken
 
 Nieuwe `index.html` in deze map zetten en:

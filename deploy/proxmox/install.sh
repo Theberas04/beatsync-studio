@@ -21,6 +21,8 @@ FETCH_ONLY="${FETCH_ONLY:-0}"
 
 FILES=(
   "deploy/proxmox/create-beatsync-lxc.sh"
+  "deploy/proxmox/provision-beatsync.sh"
+  "deploy/proxmox/fix-lxc-start.sh"
   "deploy/proxmox/nginx-beatsync.conf"
   "deploy/proxmox/update-site.sh"
   "deploy/proxmox/README.md"
@@ -58,11 +60,13 @@ log "Inhoud controleren…"
 grep -qi 'beatsync' "$TARGET_DIR/index.html"       || die "index.html lijkt niet de BeatSync-pagina."
 grep -q 'server {'  "$TARGET_DIR/nginx-beatsync.conf" || die "nginx-config lijkt onvolledig."
 grep -q 'pct create' "$TARGET_DIR/create-beatsync-lxc.sh" || die "installatiescript lijkt onvolledig."
-bash -n "$TARGET_DIR/create-beatsync-lxc.sh"       || die "installatiescript heeft een syntaxfout."
-bash -n "$TARGET_DIR/update-site.sh"               || die "update-script heeft een syntaxfout."
+for script in create-beatsync-lxc.sh provision-beatsync.sh fix-lxc-start.sh update-site.sh; do
+  bash -n "$TARGET_DIR/$script" || die "$script heeft een syntaxfout."
+done
 log "  alle bestanden compleet en syntactisch correct"
 
-chmod +x "$TARGET_DIR/create-beatsync-lxc.sh" "$TARGET_DIR/update-site.sh"
+chmod +x "$TARGET_DIR/create-beatsync-lxc.sh" "$TARGET_DIR/provision-beatsync.sh" \
+         "$TARGET_DIR/fix-lxc-start.sh" "$TARGET_DIR/update-site.sh"
 
 if [ "$FETCH_ONLY" = "1" ]; then
   log "FETCH_ONLY=1: bestanden staan in $TARGET_DIR, er is niets aangemaakt."

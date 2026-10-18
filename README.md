@@ -39,6 +39,16 @@ tabblad kiezen en **audio delen** aanvinken. Werkt het beste in Chrome of Edge.
 - Van YouTube-video's kan de audio niet door de pagina worden geanalyseerd. In deze
   versie is YouTube-ondersteuning daarom verwijderd.
 
+## Publiek bereikbaar (Cloudflare Tunnel)
+
+Na installatie op Proxmox kun je de site op een hostname zetten zonder open poorten:
+
+```bash
+./add-cloudflare-tunnel.sh <container-id>
+```
+
+Zie `deploy/proxmox/README.md` voor de dashboard-stappen.
+
 ## Installeren op Proxmox met één commando
 
 Op de Proxmox-host als root:

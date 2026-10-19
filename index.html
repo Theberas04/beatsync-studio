@@ -21,6 +21,18 @@
 <p class="hint">Directe link naar een videobestand (MP4, WebM, Ogg, MOV). Een YouTube- of Vimeo-pagina is geen videobestand en werkt hier niet.</p>
 <p class="hint">De meegeleverde clip <strong>nep-beatclip.mp4</strong> staat standaard in de lijst, dus je kunt meteen beginnen.</p>
 <div class="actions"><select id="videoSelect" aria-label="Selecteer video" disabled><option>Geen video's geladen</option></select></div>
+<div class="drop"><label for="descentSelect">Of toon een Descent now-playing-pagina als beeld</label><select id="descentSelect" style="width:100%;background:#0c1426;color:white;border:1px solid #354563;border-radius:8px;padding:10px"><option value="">— geen, gewoon mijn video —</option><option value="https://descent.live/qmusic_nl">Qmusic</option>
+<option value="https://descent.live/kinkpuntnl">KINK</option>
+<option value="https://descent.live/kinkdistortion">KINK Distortion</option>
+<option value="https://descent.live/joenl">JOE</option>
+<option value="https://descent.live/musicstartshere">Music Starts Here</option>
+<option value="https://descent.live/nporadio2">NPO Radio 2</option>
+<option value="https://descent.live/radio_10nl">Radio 10</option>
+<option value="https://descent.live/skyradionl">Sky Radio</option>
+<option value="https://descent.live/veronicanl">Radio Veronica</option>
+<option value="https://descent.live/slam_nl">SLAM!</option>
+<option value="https://descent.live/nporadio2senj">NPO Radio 2 Soul &amp; Jazz</option></select><button id="backToVideo" class="secondary" style="margin-top:8px" hidden>← Terug naar de video</button><p class="hint" style="margin:8px 0 0">Deze 11 pagina's van descent.live tonen wat de zender nu speelt (artiest en titel via Last.fm). Het is een weergave, geen videobestand: je video blijft gewoon in de lijst staan en komt terug met ‘Terug naar de video’.</p></div>
+<iframe id="descentFrame" title="Descent now playing" hidden style="width:100%;height:420px;border:1px solid #405174;border-radius:12px;background:#05070c" allow="autoplay; encrypted-media; fullscreen"></iframe>
 <div id="videoHost"><video id="video" controls playsinline></video></div>
 <div class="actions"><button id="play">▶ Video afspelen</button><button id="pause" class="secondary">Ⅱ Pauzeren</button><button id="zero" class="secondary">↺ Terug naar begin</button></div>
 <label style="display:flex;align-items:center;gap:9px;margin-top:14px;font-weight:500"><input id="videoLoop" type="checkbox" style="width:auto;min-height:0"> Video automatisch herhalen (loop)</label>
@@ -34,17 +46,7 @@
 <label for="audioSource">Kies audiobron</label><select id="audioSource" style="width:100%;background:#0a101a;color:white;border:1px solid #354259;border-radius:9px;padding:12px;font-size:15px"><option value="local">Lokaal audiobestand</option><option value="url">Directe audio-URL</option><option value="embedded">Ingebouwde browser / radio</option><option value="tab">Ander browsertabblad</option></select>
 <div class="audio-mode" data-mode="local"><div class="drop"><label for="audioFile">Open lokaal audiobestand</label><input id="audioFile" type="file" accept="audio/*"><audio id="audioPlayer" controls style="display:none;width:100%;margin-top:10px"></audio></div></div>
 <div class="audio-mode" data-mode="url" hidden><div class="drop"><label for="audioUrl">Directe audio-URL</label><input id="audioUrl" type="url" placeholder="https://…/muziek.mp3" style="width:100%;background:#0c1426;color:white;border:1px solid #354563;border-radius:8px;padding:10px"><button id="loadAudioUrl" class="secondary" style="margin-top:8px">Open audio-URL</button></div></div>
-<div class="audio-mode" data-mode="embedded" hidden><div class="drop"><label for="stationSelect">Voorkeuze: radiowebsites en Descent-zenders</label><select id="stationSelect" style="width:100%;background:#0c1426;color:white;border:1px solid #354563;border-radius:8px;padding:10px"><option value="">Kies een zender of website…</option><optgroup label="Descent — now playing"><!--DESCENT--><option value="https://descent.live/qmusic_nl">Qmusic</option>
-<option value="https://descent.live/kinkpuntnl">KINK</option>
-<option value="https://descent.live/kinkdistortion">KINK Distortion</option>
-<option value="https://descent.live/joenl">JOE</option>
-<option value="https://descent.live/musicstartshere">Music Starts Here</option>
-<option value="https://descent.live/nporadio2">NPO Radio 2</option>
-<option value="https://descent.live/radio_10nl">Radio 10</option>
-<option value="https://descent.live/skyradionl">Sky Radio</option>
-<option value="https://descent.live/veronicanl">Radio Veronica</option>
-<option value="https://descent.live/slam_nl">SLAM!</option>
-<option value="https://descent.live/nporadio2senj">NPO Radio 2 Soul &amp; Jazz</option></optgroup><optgroup label="Radiowebsites"><option value="https://www.radiozenders.fm/">radiozenders.fm</option><option value="https://www.nederland.fm/">nederland.fm</option></optgroup></select><button id="openStation" class="secondary" style="margin-top:8px">Open in de ingebouwde browser</button><p class="hint" style="margin:8px 0 0">De Descent-links openen een <em>now playing</em>-weergave van die zender: artiest en titel via Last.fm, geen audiostream. Staat er “Nothing in the air”, dan scrobbelt die zender op dit moment niet — dat ligt bij de zender, niet bij de app. Radiowebsites spelen wel audio; koppel die daarna met ‘Koppel ingebouwde audio’.</p></div>
+<div class="audio-mode" data-mode="embedded" hidden><div class="drop"><label for="stationSelect">Voorkeuze radiowebsites</label><select id="stationSelect" style="width:100%;background:#0c1426;color:white;border:1px solid #354563;border-radius:8px;padding:10px"><option value="">Kies een radiowebsite…</option><option value="https://www.radiozenders.fm/">radiozenders.fm</option><option value="https://www.nederland.fm/">nederland.fm</option></select><button id="openStation" class="secondary" style="margin-top:8px">Open geselecteerde radio in ingebouwde browser</button></div>
 <div class="drop"><label for="siteUrl">Of open een andere website in de ingebouwde browser</label><input id="siteUrl" type="url" placeholder="https://…" style="width:100%;background:#0c1426;color:white;border:1px solid #354563;border-radius:8px;padding:10px"><button id="openSite" class="secondary" style="margin-top:8px">Open website</button><iframe id="siteFrame" title="Ingebouwde browser voor muziekwebsite" style="display:none;width:100%;height:420px;border:1px solid #405174;border-radius:10px;margin-top:10px" allow="autoplay; encrypted-media; fullscreen; picture-in-picture"></iframe></div>
 <p class="hint">Start de radio in de ingebouwde browser en klik daarna op ‘Koppel ingebouwde audio’. Kies in de browserdialoog dit tabblad en schakel audio delen in. Insluiten kan door radiowebsites worden geblokkeerd; gebruik dan ‘Open website in nieuw tabblad’ en kies in de dropdown ‘Ander browsertabblad’.</p><div class="actions"><button id="openExternal" class="secondary">Open website in nieuw tabblad</button><button id="connectEmbedded" class="secondary">♫ Koppel ingebouwde audio</button></div></div>
 <div class="audio-mode" data-mode="tab" hidden><p class="hint">Deel een tabblad waarop audio speelt. Kies in het browservenster het juiste tabblad en vink audio delen aan.</p><button id="connect">♫ Selecteer browsertabblad</button></div>
@@ -90,7 +92,7 @@ const BUNDLED_CLIPS=[{name:'nep-beatclip.mp4',url:'media/nep-beatclip.mp4'}];
 const audioSourceSelect=$('audioSource');function setAudioMode(){document.querySelectorAll('.audio-mode').forEach(el=>{el.hidden=el.dataset.mode!==audioSourceSelect.value})}audioSourceSelect.addEventListener('change',setAudioMode);setAudioMode();
 const videoFile=$('videoFile'), videoSelect=$('videoSelect'), videoHost=$('videoHost');
 function renderClips(activeIndex){videoSelect.innerHTML='';clips.forEach((c,i)=>{const o=document.createElement('option');o.value=i;o.textContent=(c.kind==='bundled'?'🎬 ':c.kind==='url'?'🔗 ':'')+c.name;o.selected=(i===activeIndex);videoSelect.appendChild(o)});videoSelect.disabled=!clips.length;}
-function loadClip(i){const c=clips[i];if(!c)return;if(videoUrl){URL.revokeObjectURL(videoUrl);videoUrl=null;}
+function loadClip(i){const c=clips[i];if(!c)return;if(typeof showVideo==='function')showVideo();if(videoUrl){URL.revokeObjectURL(videoUrl);videoUrl=null;}
  if(c.kind==='file'){videoUrl=URL.createObjectURL(c.file);video.src=videoUrl;}else{video.src=c.url;}
  videoHost.innerHTML='';videoHost.appendChild(video);video.load();video.loop=$('videoLoop').checked;
  $('videoStatus').textContent=c.name+' ('+(Number(i)+1)+'/'+clips.length+')'+(c.kind==='url'?' · via URL':c.kind==='bundled'?' · meegeleverd':'');$('videoStatus').className='status good';}
@@ -107,6 +109,17 @@ function addVideoUrlClip(){const input=$('videoUrl');let raw=(input.value||'').t
 $('addVideoUrl').addEventListener('click',addVideoUrlClip);
 $('videoUrl').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addVideoUrlClip();}});
 videoSelect.addEventListener('change',()=>loadClip(Number(videoSelect.value)));
+const descentSelect=$('descentSelect'), descentFrame=$('descentFrame');
+function showVideo(){descentFrame.hidden=true;descentFrame.removeAttribute('src');videoHost.hidden=false;$('backToVideo').hidden=true;descentSelect.value='';
+ const c=clips[Number(videoSelect.value)];
+ $('videoStatus').textContent=c?('Video-weergave: '+c.name):'Kies een video of plak een URL.';
+ $('videoStatus').className='status good';}
+descentSelect.addEventListener('change',()=>{const u=descentSelect.value;
+ if(!u){showVideo();return}
+ descentFrame.src=u;descentFrame.hidden=false;videoHost.hidden=true;$('backToVideo').hidden=false;
+ $('videoStatus').textContent='Descent-weergave: '+descentSelect.selectedOptions[0].textContent+' · now playing (geen video). Staat er “Nothing in the air”, dan scrobbelt die zender nu niet.';
+ $('videoStatus').className='status good';});
+$('backToVideo').onclick=showVideo;
 video.addEventListener('error',()=>{const c=clips[Number(videoSelect.value)];if(!c)return;
  if(c.kind==='bundled'){$('videoStatus').textContent='De meegeleverde clip staat niet op deze server. Zet hem erbij met update-from-github.sh.';}
  else if(c.kind==='url'){$('videoStatus').textContent='Deze URL kan de browser niet als video laden. Gebruik een directe link naar een bestand (bijv. .mp4 of .webm) die zonder login bereikbaar is. Een YouTube- of Vimeo-pagina werkt niet.';}

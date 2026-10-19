@@ -92,6 +92,12 @@ server {
     add_header X-Content-Type-Options "nosniff" always;
     add_header Cache-Control "no-cache" always;
 
+    # Mediabestanden: nooit terugvallen op index.html (anders krijgt de browser
+    # een HTML-pagina waar hij een video verwacht).
+    location /media/ {
+        try_files $uri =404;
+    }
+
     location / {
         if ($beatsync_serve_plain = 0) {
             return 301 https://$host$request_uri;
@@ -127,6 +133,12 @@ server {
         return 200 "ok\n";
     }
 
+    # Mediabestanden: nooit terugvallen op index.html (anders krijgt de browser
+    # een HTML-pagina waar hij een video verwacht).
+    location /media/ {
+        try_files $uri =404;
+    }
+
     location / {
         try_files $uri $uri/ /index.html;
     }
@@ -143,6 +155,12 @@ server {
         access_log off;
         default_type text/plain;
         return 200 "ok\n";
+    }
+
+    # Mediabestanden: nooit terugvallen op index.html (anders krijgt de browser
+    # een HTML-pagina waar hij een video verwacht).
+    location /media/ {
+        try_files $uri =404;
     }
 
     location / {
@@ -171,6 +189,12 @@ server {
         return 200 "ok\n";
     }
 
+    # Mediabestanden: nooit terugvallen op index.html (anders krijgt de browser
+    # een HTML-pagina waar hij een video verwacht).
+    location /media/ {
+        try_files $uri =404;
+    }
+
     location / {
         try_files $uri $uri/ /index.html;
     }
@@ -187,6 +211,12 @@ server {
         access_log off;
         default_type text/plain;
         return 200 "ok\n";
+    }
+
+    # Mediabestanden: nooit terugvallen op index.html (anders krijgt de browser
+    # een HTML-pagina waar hij een video verwacht).
+    location /media/ {
+        try_files $uri =404;
     }
 
     location / {

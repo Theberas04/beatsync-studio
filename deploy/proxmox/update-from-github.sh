@@ -20,6 +20,15 @@ bad()  { printf '\033[1;31m[fout]\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33m[!]\033[0m %s\n' "$*"; }
 log()  { printf '     %s\n' "$*"; }
 
+# Headers opvragen zonder curl in de container (bash /dev/tcp werkt altijd).
+probe_head() {   # $1=poort  $2=pad
+  printf '%s\n' \
+    'exec 3<>/dev/tcp/127.0.0.1/"$1" || exit 9' \
+    'printf "GET %s HTTP/1.0\\r\\nHost: 127.0.0.1\\r\\n\\r\\n" "$2" >&3' \
+    'timeout 5 head -20 <&3' \
+    | pct exec "$CTID" -- bash -s "$1" "${2:-/}" 2>/dev/null
+}
+
 [ "$(id -u)" -eq 0 ] || { bad "Draai dit als root op de Proxmox-host."; exit 1; }
 command -v pct >/dev/null || { bad "pct niet gevonden: dit is geen Proxmox VE-host."; exit 1; }
 [ -n "$CTID" ] || { bad "Gebruik: $0 <container-id>"; exit 1; }
@@ -108,6 +117,27 @@ for name in $MEDIA_LIST; do
 done
 
 # --------------------------------------------------------------- afronden
+# Controleer of nginx de bestanden ook echt als video serveert.
+if pct exec "$CTID" -- bash -c "command -v nginx >/dev/null"; then
+  for name in $MEDIA_LIST; do
+    case "$name" in */*|.*) continue ;; esac
+    HEAD="$(probe_head 8080 "/media/$name")"
+    STATUS="$(printf '%s' "$HEAD" | head -1 | tr -d '\r' | awk '{print $2}')"
+    TYPE="$(printf '%s' "$HEAD" | tr -d '\r' | awk 'tolower($1)=="content-type:"{print $2; exit}')"
+    case "$STATUS:$TYPE" in
+      200:video/*) ok "web: /media/$name -> 200 $TYPE" ;;
+      200:text/html*)
+        bad "web: /media/$name geeft de HTML-pagina terug in plaats van de video."
+        log "Oorzaak: nginx valt terug op index.html; de media-locatie ontbreekt in de config."
+        log "Oplossing: ./fix-loop.sh $CTID   (schrijft de config met een /media/-blok)"
+        MEDIA_FAIL=1 ;;
+      404:*) bad "web: /media/$name -> 404 (bestand staat niet in $SITE_DIR/media)."; MEDIA_FAIL=1 ;;
+      200:*) warn "web: /media/$name -> 200 met type ${TYPE:-onbekend} (geen video)." ;;
+      *)     warn "web: /media/$name -> ${STATUS:-geen antwoord}." ;;
+    esac
+  done
+fi
+
 TELLER="$(pct exec "$CTID" -- bash -c "ls -1 '$SITE_DIR/media' 2>/dev/null | wc -l" | tr -d '\r')"
 log "Bestanden in $SITE_DIR/media: ${TELLER:-0}"
 

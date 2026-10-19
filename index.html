@@ -255,6 +255,52 @@ function disconnect(){if(raf)cancelAnimationFrame(raf);if(stream)stream.getTrack
 $('disconnect').onclick=disconnect;
 
 let lastFlux=0, fluxHistory=[], onsetTimes=[], lastOnset=0, bpmSmooth=null, peakHold=0, eqCtx=null;
+let env=[], lastBpmTry=0, bpmHistory=[];
+function estimateBpm(now){
+ if(env.length<30)return;
+ const span=(env[env.length-1].t-env[0].t)/1000;
+ if(span<2.0)return;
+ const rate=200, N=Math.floor(span*rate);
+ // energie-envelop op 200 Hz, lineair geresampled
+ const t0=env[0].t, x=new Float32Array(N);
+ let j=0;
+ for(let i=0;i<N;i++){
+  const tt=t0+i*1000/rate;
+  while(j<env.length-2&&env[j+1].t<tt)j++;
+  const a=env[j], b=env[Math.min(j+1,env.length-1)], dt=b.t-a.t;
+  x[i]=dt>0?a.v+(b.v-a.v)*Math.min(1,Math.max(0,(tt-a.t)/dt)):a.v;
+ }
+ let mean=0;for(let i=0;i<N;i++)mean+=x[i];mean/=N;
+ for(let i=0;i<N;i++)x[i]-=mean;
+ const minLag=Math.round(rate*0.30), maxLag=Math.min(Math.round(rate*1.45), N-70);
+ if(maxLag<=minLag+4)return;
+ let bestLag=0,bestVal=-1e9;
+ for(let lag=minLag;lag<=maxLag;lag++){
+  const n2=N-lag; if(n2<60)continue;
+  let acc=0; for(let i=0;i<n2;i++)acc+=x[i]*x[i+lag];
+  acc/=n2;
+  if(acc>bestVal){bestVal=acc;bestLag=lag}
+ }
+ if(!bestLag||bestVal<=0)return;
+ // De sterkste periodiciteit is in de praktijk twee tellen (kick/snare-patroon),
+ // daarom rekenen we met twee tellen per periode en normaliseren we daarna het octaaf.
+ let candidate=120*rate/bestLag;
+ while(candidate<70)candidate*=2;
+ while(candidate>=180)candidate/=2;
+ if(!(candidate>=55&&candidate<=200))return;
+ bpmHistory.push(candidate); if(bpmHistory.length>5)bpmHistory.shift();
+ const sorted=[...bpmHistory].sort((a,b)=>a-b);
+ const med=sorted[Math.floor(sorted.length/2)];
+ const alpha=bpmSmooth===null?1:(bpmHistory.length<3?0.6:0.3);
+ bpmSmooth=bpmSmooth===null?med:bpmSmooth*(1-alpha)+med*alpha;
+ const shown=Math.round(bpmSmooth);
+ if($('detected').textContent!==String(shown)){
+  $('detected').textContent=String(shown);
+  $('detected').title='Live schatting uit de energie-envelop; wordt een paar keer per seconde bijgesteld';
+  $('targetBpm').value=String(shown);
+  applyLiveSpeed();
+ }
+}
 function dbfs(v){return v>0?20*Math.log10(v):-Infinity}
 function drawLiveMeters(data){
  let sum=0,peak=0;for(let i=0;i<data.length;i++){const a=Math.abs(data[i]);sum+=data[i]*data[i];if(a>peak)peak=a;}
@@ -291,34 +337,12 @@ function analyze(){
  const high=vals.length?vals[Math.min(vals.length-1,Math.floor(vals.length*.82))]:0;
  const threshold=Math.max(0.008,median+(high-median)*0.9);
  const rising=flux>lastFlux*1.06;
- if(rising && flux>threshold && now-lastOnset>220){
-   lastOnset=now;
-   onsetTimes.push(now);
-   onsetTimes=onsetTimes.filter(t=>now-t<12000);
-   if(onsetTimes.length>=4){
-     const intervals=[];
-     for(let i=1;i<onsetTimes.length;i++){
-       const d=onsetTimes[i]-onsetTimes[i-1];
-       if(d>=250&&d<=1500)intervals.push(d);
-     }
-     if(intervals.length>=3){
-       // Median reduces outlier influence; normalize common half/double-time errors.
-       intervals.sort((a,b)=>a-b);
-       const mid=intervals[Math.floor(intervals.length/2)];
-       let candidate=60000/mid;
-       while(candidate<60)candidate*=2;
-       while(candidate>180)candidate/=2;
-       if(candidate>=40&&candidate<=220){
-         bpmSmooth=bpmSmooth===null?candidate:(bpmSmooth*.65+candidate*.35);
-         $('detected').textContent=String(Math.round(bpmSmooth));
-         $('detected').title='Live schatting; wordt bijgewerkt zodra nieuwe beats worden gedetecteerd';
-         // Use the newly measured audio tempo as the live target for video playback speed.
-         $('targetBpm').value=String(Math.round(bpmSmooth));
-         applyLiveSpeed();
-       }
-     }
-   }
- }
+ if(rising && flux>threshold && now-lastOnset>200){lastOnset=now}
+ // BPM uit de energie-envelop: autocorrelatie over de laatste seconden.
+ // Sneller en stabieler dan losse onset-intervallen, en ongevoelig voor losse uitschieters.
+ env.push({t:now,v:flux});
+ env=env.filter(x=>now-x.t<5200);
+ if(now-lastBpmTry>300){lastBpmTry=now;estimateBpm(now)}
  lastFlux=flux;
  raf=requestAnimationFrame(analyze);
 }</script>

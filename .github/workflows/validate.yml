@@ -114,8 +114,11 @@ jobs:
 
       - name: Geen achtergebleven YouTube-code
         run: |
-          if grep -qi 'youtube\|ytPlayer\|loadYoutube' index.html; then
-            echo "YouTube-verwijzing gevonden terwijl die verwijderd hoort te zijn" >&2
+          # De embed is bewust weg. Toelichtende tekst voor gebruikers mag het platform
+          # noemen; code, iframes en embed-URL's niet.
+          if grep -qiE 'ytPlayer|loadYoutube|youtube\.com/embed|youtube-nocookie|iframe_api|player\.vimeo\.com' index.html; then
+            echo "Embed-code gevonden terwijl die verwijderd hoort te zijn" >&2
+            grep -niE 'ytPlayer|loadYoutube|youtube\.com/embed|youtube-nocookie|iframe_api|player\.vimeo\.com' index.html >&2
             exit 1
           fi
-          echo "geen YouTube-resten"
+          echo "geen embed-resten"

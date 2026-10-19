@@ -28,6 +28,19 @@ Alles draait lokaal in je browser: er worden geen bestanden geüpload.
 Voor het delen van tabblad- of schermaudio moet je in de browserdialoog het juiste
 tabblad kiezen en **audio delen** aanvinken. Werkt het beste in Chrome of Edge.
 
+### Video via een URL
+
+Plak een directe link naar een videobestand (MP4, WebM, Ogg, MOV) in het URL-veld en klik
+op **URL laden**. Wat werkt:
+
+- links die direct een mediabestand opleveren, ook als de host geen CORS-headers stuurt
+  (afspelen vereist geen CORS);
+- meerdere URL's naast lokale bestanden; ze staan samen in de keuzelijst.
+
+Wat niet werkt: een YouTube-, Vimeo- of andere **webpagina**-link. Dat is geen videobestand,
+dus de browser kan hem niet laden — de app meldt dat dan ook. Een link achter een login of
+met een 403 werkt om dezelfde reden niet.
+
 ## Beperkingen
 
 - BPM-detectie is een schatting; bij complexe muziek kan er een halve of dubbele

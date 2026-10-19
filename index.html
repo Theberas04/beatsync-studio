@@ -64,6 +64,14 @@ details.more select{width:100%;background:rgba(255,255,255,.03);border-color:rgb
 #panelAudio .status{margin-top:12px;font-size:12.5px}
 #panelAudio .note{background:rgba(54,169,225,.07);border-left:2px solid rgba(54,169,225,.55);color:#a9b8d4;font-size:12px;padding:9px 11px;margin-top:12px}
 #panelAudio .metric em{display:block;margin-top:3px}
+
+/* dropdowns: de os-popup van <select> gebruikt geen doorschijnende kleuren,
+   dus expliciete, dekkende kleuren voor het veld én de opties */
+select{color-scheme:dark}
+select,input[type=url]{background-color:#0c1426}
+select option,select optgroup{background-color:#0c1426;color:#f2f5fb}
+select option:checked,select option:focus{background-color:#20305a;color:#fff}
+#panelAudio select,#panelVideo .picker select,details.more select{background-color:#0c1426;color:#f2f5fb}
 </style>
 </head>
 <body><main>

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BeatSync Studio · meters</title>
+<style>
+:root{--bg:#070c16;--panel:#0f1729;--line:#1c2740;--txt:#e7edf8;--dim:#8492b1;--accent:#ffc629}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(1200px 600px at 20% -10%,#12203a 0%,#070c16 60%);color:var(--txt);
+ font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:22px}
+header{display:flex;align-items:baseline;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+h1{margin:0;font-size:20px;font-weight:650;letter-spacing:-.3px}
+h1 b{color:var(--accent);font-weight:650}
+.conn{font-size:13px;color:var(--dim)}
+.conn.on{color:#77f2c2}
+.panel{background:linear-gradient(180deg,#101a2e,#0d1526);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:minmax(280px,1fr) minmax(320px,1.3fr);gap:16px}
+@media(max-width:760px){.grid{grid-template-columns:1fr}}
+h2{margin:0 0 12px;font-size:15px;font-weight:600;color:#cdd8ee}
+.vt{display:flex;align-items:baseline;justify-content:space-between;gap:10px;font-size:13px;color:var(--dim);margin-bottom:8px}
+.vt b{color:#cdd8ee;font-size:13px;font-weight:600}
+.track{height:26px;border:1px solid var(--line);border-radius:8px;background:#080e1b;overflow:hidden}
+#vuFill{height:100%;width:0%;background:linear-gradient(90deg,#35a6a0,#77f2c2 55%,#ffc629);transition:width .06s linear}
+.scale{display:flex;justify-content:space-between;font-size:11px;color:#6d7c9c;margin-top:7px;font-variant-numeric:tabular-nums}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
+.metric{background:#0b1424;border:1px solid var(--line);border-radius:11px;padding:11px 12px}
+.metric small{display:block;color:var(--dim);font-size:11.5px}
+.metric strong{display:block;font-size:22px;font-weight:650;font-variant-numeric:tabular-nums;letter-spacing:-.3px}
+.metric em{font-style:normal;color:#6d7c9c;font-size:11px}
+canvas{width:100%;height:210px;display:block;border-radius:10px;border:1px solid var(--line)}
+.hint{color:var(--dim);font-size:12px;margin:10px 0 0}
+.status{font-size:13px;color:var(--dim)}
+</style>
+</head>
+<body>
+<header>
+ <h1><b>BeatSync</b> · losse meters</h1>
+ <div class="conn" id="conn">verbinden…</div>
+</header>
+
+<div class="panel">
+ <div class="vt"><b>VU-meter · signaalniveau</b><span id="vuReadout">−∞ dB</span></div>
+ <div class="track"><div id="vuFill"></div></div>
+ <div class="scale"><span>stil</span><span>−18 dB</span><span>−6 dB</span><span>0 dB</span></div>
+ <div class="metrics">
+  <div class="metric"><small>Piek</small><strong id="peakReadout">−∞</strong><em>dBFS</em></div>
+  <div class="metric"><small>RMS</small><strong id="rmsReadout">−∞</strong><em>dBFS</em></div>
+  <div class="metric"><small>Signaal</small><strong id="volReadout">0%</strong><em>live</em></div>
+ </div>
+</div>
+
+<div class="panel">
+ <div class="grid">
+  <div>
+   <h2>BPM &amp; sync</h2>
+   <div class="metrics" style="grid-template-columns:1fr 1fr;margin-top:0">
+    <div class="metric"><small>Gemeten tempo</small><strong id="bpm">—</strong><em>BPM (schatting)</em></div>
+    <div class="metric"><small>Gewenst tempo</small><strong id="target">—</strong><em>BPM</em></div>
+   </div>
+   <div class="metrics" style="grid-template-columns:1fr;margin-top:12px">
+    <div class="metric"><small>Videosnelheid</small><strong id="speed">—</strong><em id="clip">geen clip</em></div>
+   </div>
+   <p class="hint" id="status">Wacht op audio…</p>
+  </div>
+  <div>
+   <div class="vt"><b>Live EQ · spectrum</b><span id="eqStatus">Wacht op audio…</span></div>
+   <canvas id="eq"></canvas>
+   <div class="scale"><span>20 Hz</span><span>Bas</span><span>Midden</span><span>Hoge tonen</span><span>20 kHz</span></div>
+  </div>
+ </div>
+</div>
+
+<p class="hint">Dit venster toont alleen mee: het geluid en de video blijven in het tabblad van BeatSync Studio zelf.
+ Open je dit venster los, gebruik dan de knop <b>⧉ Eigen tabblad</b> bij de meters in de app.</p>
+
+<script>
+const $=id=>document.getElementById(id);
+let M=null, host=null, peakHold=-60, ctx2=null, raf=null;
+
+function connect(){
+ try{
+  host=window.opener;
+  M=(host&&!host.closed&&host.bsMeters)?host.bsMeters:null;
+ }catch(e){M=null;host=null}
+ const ok=!!(M&&M.getAnalyser&&M.getAnalyser());
+ $('conn').textContent=M?(ok?'verbonden · live':'verbonden · wacht op audio'):'geen verbinding met de app';
+ $('conn').className='conn'+(M&&ok?' on':'');
+}
+
+function dbfs(v){return v>0?20*Math.log10(v):-Infinity}
+
+function drawMeters(data){
+ let sum=0,peak=0;
+ for(let i=0;i<data.length;i++){const a=Math.abs(data[i]);sum+=data[i]*data[i];if(a>peak)peak=a}
+ const rms=Math.sqrt(sum/data.length), rmsDb=dbfs(rms), peakDb=dbfs(peak);
+ peakHold=Math.max(peakDb,peakHold-0.18);
+ const displayDb=Number.isFinite(rmsDb)?rmsDb:-60;
+ const pct=Math.max(0,Math.min(100,(displayDb+60)/60*100));
+ $('vuFill').style.width=pct+'%';
+ $('vuReadout').textContent=Number.isFinite(rmsDb)?rmsDb.toFixed(1)+' dB':'−∞ dB';
+ $('peakReadout').textContent=Number.isFinite(peakHold)?peakHold.toFixed(1):'−∞';
+ $('rmsReadout').textContent=Number.isFinite(rmsDb)?rmsDb.toFixed(1):'−∞';
+ $('volReadout').textContent=Math.min(100,Math.round(rms*300))+'%';
+}
+
+function drawEQ(analyser){
+ const canvas=$('eq');const rect=canvas.getBoundingClientRect();if(!rect.width)return;
+ const dpr=window.devicePixelRatio||1,w=Math.round(rect.width*dpr),h=Math.round(rect.height*dpr);
+ if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}
+ if(!ctx2)ctx2=canvas.getContext('2d');if(!ctx2)return;
+ const bins=analyser.frequencyBinCount,freq=new Uint8Array(bins);analyser.getByteFrequencyData(freq);
+ ctx2.clearRect(0,0,w,h);ctx2.fillStyle='#080e1b';ctx2.fillRect(0,0,w,h);
+ ctx2.strokeStyle='#1e2b45';ctx2.lineWidth=dpr;
+ for(let i=1;i<4;i++){const y=h*i/4;ctx2.beginPath();ctx2.moveTo(0,y);ctx2.lineTo(w,y);ctx2.stroke()}
+ let sr=48000;try{sr=M.getAnalyser().context.sampleRate}catch(e){}
+ const minF=20,maxF=Math.min(20000,sr/2),count=64,gap=2*dpr;
+ for(let i=0;i<count;i++){
+  const f0=minF*Math.pow(maxF/minF,i/count),f1=minF*Math.pow(maxF/minF,(i+1)/count);
+  const b0=Math.max(0,Math.floor(f0/(sr/2)*bins)),b1=Math.min(bins-1,Math.max(b0+1,Math.ceil(f1/(sr/2)*bins)));
+  let v=0;for(let b=b0;b<=b1;b++)v=Math.max(v,freq[b]/255);
+  const barH=Math.max(2*dpr,v*(h-8*dpr)),barW=w/count-gap;
+  const x=i*w/count+gap/2,y=h-barH;
+  const grad=ctx2.createLinearGradient(0,y,0,h);
+  grad.addColorStop(0,'#8aa7ff');grad.addColorStop(.55,'#77f2c2');grad.addColorStop(1,'#35a6a0');
+  ctx2.fillStyle=grad;ctx2.fillRect(x,y,Math.max(1,barW),barH);
+ }
+}
+
+function loop(){
+ raf=requestAnimationFrame(loop);
+ const analyser=M&&M.getAnalyser&&M.getAnalyser();
+ if(!analyser){
+  $('eqStatus').textContent='Wacht op audio…';
+  return;
+ }
+ const s=(M.state||{});
+ $('bpm').textContent=s.bpm||'—';
+ $('target').textContent=(s.target||'—')+' ';
+ $('target').innerHTML=(s.target||'—')+'<em> BPM</em>';
+ $('speed').textContent=s.speed||'—';
+ $('clip').textContent=s.clip||'geen clip';
+ $('status').textContent=s.status||'';
+ $('eqStatus').textContent='Live';
+ const n=analyser.fftSize,data=new Float32Array(n);
+ analyser.getFloatTimeDomainData(data);
+ drawMeters(data);drawEQ(analyser);
+}
+
+connect();
+loop();
+setInterval(connect,700);
+window.addEventListener('beforeunload',()=>{if(raf)cancelAnimationFrame(raf)});
+</script>
+</body>
+</html>

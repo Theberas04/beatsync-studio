@@ -64,6 +64,7 @@ video** zet je eigen video weer neer.
 - **BPM-schatting** met adaptieve beat-detectie, plus tap-tempo.
 - **Tempo-correctie**: videosnelheid op basis van BPM, met timing-offset en automatische modus.
 - **Videogeluid staat uit**: de video speelt altijd gedempt, dus je hoort alleen de gekozen audiobron en de BPM-analyse meet nooit het beeld zelf.
+- **Los meters-venster**: met **⧉ Eigen tabblad** zet je de VU-meters, de EQ en de BPM in een eigen tabblad naast de app — handig als je de video groot wilt houden.
 
 ## Gebruik
 
@@ -76,6 +77,17 @@ Voor het delen van tabbladaudio kies je in de browserdialoog het tabblad waarop 
 speelt en zet je **Tabblad-audio delen** aan. Dit BeatSync-tabblad wordt bewust niet
 aangeboden, zodat de app niet zijn eigen geluid gaat analyseren. Werkt het beste in Chrome
 of Edge.
+
+### Meters in een eigen tabblad
+
+Bij **03 · Live VU-meters & EQ** staat de knop **⧉ Eigen tabblad**. Die opent `meters.html`
+in een nieuw tabblad of venster: dezelfde VU-meter, piek/RMS, spectrum-analyzer en het
+gemeten tempo, maar zonder de rest van de app eromheen.
+
+Het geluid en de video blijven in het tabblad van de app zelf spelen — het meters-venster
+leest de analyser rechtstreeks mee. Dat blijft werken als de app naar de achtergrond gaat,
+juist omdat het meelezen in het zichtbare tabblad gebeurt. Sluit je het app-tabblad, dan
+meldt het venster dat de verbinding weg is.
 
 ### Meegeleverde clip
 
@@ -143,6 +155,7 @@ Diagnose en probleemoplossing (redirect-lus, certificaatdekking, origin-instelli
 ```
 index.html                     de hele app: HTML, CSS en JS in één bestand
 media/nep-beatclip.mp4         meegeleverde clip
+meters.html                     los venster met VU-meters, EQ en BPM
 docs/screenshots/              beelden voor deze README
 deploy/proxmox/install.sh      one-liner installatie
 deploy/proxmox/update-from-github.sh   site + media bijwerken in een bestaande container

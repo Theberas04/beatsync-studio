@@ -13,7 +13,8 @@ RAW_BASE="https://raw.githubusercontent.com/${REPO}/main"
 # Cache-buster: raw.githubusercontent serveert anders tot ~5 min een oude versie.
 CB="cb=$(date +%s)"
 TMP="$(mktemp)"
-trap 'rm -f "$TMP"' EXIT
+TMP2="$(mktemp)"
+trap 'rm -f "$TMP" "$TMP2"' EXIT
 
 ok()   { printf '\033[1;32m[ok]\033[0m %s\n' "$*"; }
 bad()  { printf '\033[1;31m[fout]\033[0m %s\n' "$*"; }
@@ -65,6 +66,29 @@ else
     exit 1
   fi
   ok "index.html bijgewerkt naar $CHECK bytes."
+fi
+
+# --------------------------------------------------------------- meters.html
+log "Los meters-venster (meters.html) ophalen…"
+if curl -fsSL --max-time 25 "$RAW_BASE/meters.html?$CB" -o "$TMP2"; then
+  if ! grep -q '<title>BeatSync' "$TMP2"; then
+    warn "Het opgehaalde meters.html lijkt geen BeatSync-pagina; overgeslagen."
+  else
+    NEW_SHA2="$(sha256sum "$TMP2" | cut -d' ' -f1)"
+    if pct exec "$CTID" -- bash -c "sha256sum '$SITE_DIR/meters.html' 2>/dev/null" | grep -q "$NEW_SHA2"; then
+      ok "meters.html in de container is al deze versie."
+    else
+      pct exec "$CTID" -- bash -c "cat > '$SITE_DIR/meters.html'" < "$TMP2"
+      CHECK2="$(pct exec "$CTID" -- bash -c "stat -c %s '$SITE_DIR/meters.html'" | tr -d '\r')"
+      if [ "$CHECK2" != "$(wc -c <"$TMP2")" ]; then
+        bad "meters.html is $CHECK2 bytes in de container, verwacht $(wc -c <"$TMP2")."
+      else
+        ok "meters.html bijgewerkt naar $CHECK2 bytes."
+      fi
+    fi
+  fi
+else
+  warn "meters.html niet gevonden op GitHub; het losse meters-venster blijft op de oude versie."
 fi
 
 # ------------------------------------------------------------------- media

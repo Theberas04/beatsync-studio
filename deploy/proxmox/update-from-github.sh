@@ -71,50 +71,76 @@ fi
 echo
 log "Mediabestanden synchroniseren…"
 MEDIA_LIST=""
+MEDIA_LIST_OK=0
 if command -v python3 >/dev/null 2>&1; then
-  MEDIA_LIST="$(curl -fsSL --max-time 25 "https://api.github.com/repos/${REPO}/contents/media?ref=main" 2>/dev/null \
-    | python3 -c 'import sys, json
+  MEDIA_JSON="$(curl -sSL --max-time 25 "https://api.github.com/repos/${REPO}/contents/media?ref=main" 2>/dev/null || true)"
+  if [ -n "$MEDIA_JSON" ]; then
+    MEDIA_LIST="$(printf '%s' "$MEDIA_JSON" | python3 -c 'import sys, json
 try:
     data = json.load(sys.stdin)
 except Exception:
-    raise SystemExit(0)
-if isinstance(data, list):
-    for item in data:
-        if isinstance(item, dict) and item.get("type") == "file":
-            print(item["name"])' 2>/dev/null || true)"
+    raise SystemExit(1)
+if not isinstance(data, list):
+    raise SystemExit(1)
+for item in data:
+    name = item.get("name", "") if isinstance(item, dict) else ""
+    if isinstance(item, dict) and item.get("type") == "file" and name and not name.startswith("."):
+        print(name)' 2>/dev/null)"
+    if [ $? -eq 0 ]; then MEDIA_LIST_OK=1; fi
+  fi
 fi
-if [ -z "$MEDIA_LIST" ]; then
-  warn "Geen lijst via de GitHub-API (limiet of geen python3); ik gebruik de vaste lijst."
-  MEDIA_LIST="nep-beatclip.mp4"
+if [ "$MEDIA_LIST_OK" -ne 1 ]; then
+  warn "Geen betrouwbare medialijst van GitHub (limiet of netwerk); mediabestanden overgeslagen."
 fi
 
 pct exec "$CTID" -- bash -c "mkdir -p '$SITE_DIR/media'"
 MEDIA_FAIL=0
-for name in $MEDIA_LIST; do
-  case "$name" in */*|.*) warn "Onverwachte naam overgeslagen: $name"; continue ;; esac
-  MT="$(mktemp)"
-  if ! curl -fsSL --max-time 180 "$RAW_BASE/media/$name?$CB" -o "$MT"; then
-    bad "Kon media/$name niet ophalen."
-    MEDIA_FAIL=1
-    rm -f "$MT"
-    continue
-  fi
-  MSIZE="$(wc -c <"$MT")"
-  MSHA="$(sha256sum "$MT" | cut -d' ' -f1)"
-  if pct exec "$CTID" -- bash -c "sha256sum '$SITE_DIR/media/$name' 2>/dev/null" | grep -q "$MSHA"; then
-    ok "media/$name staat er al ($MSIZE bytes)."
-  else
-    pct exec "$CTID" -- bash -c "cat > '$SITE_DIR/media/$name'" < "$MT"
-    PUSHED="$(pct exec "$CTID" -- bash -c "stat -c %s '$SITE_DIR/media/$name'" | tr -d '\r')"
-    if [ "$PUSHED" = "$MSIZE" ]; then
-      ok "media/$name geplaatst ($MSIZE bytes)."
-    else
-      bad "media/$name is $PUSHED bytes in de container, verwacht $MSIZE."
+if [ "$MEDIA_LIST_OK" -eq 1 ]; then
+  for name in $MEDIA_LIST; do
+    case "$name" in */*|.*) warn "Onverwachte naam overgeslagen: $name"; continue ;; esac
+    MT="$(mktemp)"
+    if ! curl -fsSL --max-time 180 "${RAW_BASE}/media/${name}?${CB}" -o "$MT"; then
+      bad "Kon media/$name niet ophalen."
       MEDIA_FAIL=1
+      rm -f "$MT"
+      continue
     fi
-  fi
-  rm -f "$MT"
-done
+    MSIZE="$(wc -c <"$MT")"
+    MSHA="$(sha256sum "$MT" | cut -d' ' -f1)"
+    if pct exec "$CTID" -- bash -c "sha256sum '$SITE_DIR/media/$name' 2>/dev/null" | grep -q "$MSHA"; then
+      ok "media/$name staat er al ($MSIZE bytes)."
+    else
+      pct exec "$CTID" -- bash -c "cat > '$SITE_DIR/media/$name'" < "$MT"
+      PUSHED="$(pct exec "$CTID" -- bash -c "stat -c %s '$SITE_DIR/media/$name'" | tr -d '\r')"
+      if [ "$PUSHED" = "$MSIZE" ]; then
+        ok "media/$name geplaatst ($MSIZE bytes)."
+      else
+        bad "media/$name is $PUSHED bytes in de container, verwacht $MSIZE."
+        MEDIA_FAIL=1
+      fi
+    fi
+    rm -f "$MT"
+  done
+
+  # bestanden die niet meer in de repo staan, horen ook niet meer in de container
+  EXISTING="$(pct exec "$CTID" -- bash -c "ls -1 '$SITE_DIR/media' 2>/dev/null" | tr -d '\r')"
+  for f in $EXISTING; do
+    case "$f" in .*|"") continue ;; esac
+    case " $MEDIA_LIST " in
+      *" $f "*) ;;
+      *)
+        if pct exec "$CTID" -- rm -f "$SITE_DIR/media/$f"; then
+          ok "media/$f verwijderd (staat niet meer in de repo)."
+        else
+          warn "Kon media/$f niet verwijderen."
+        fi
+        ;;
+    esac
+  done
+  if [ -z "$MEDIA_LIST" ]; then ok "Geen mediabestanden in de repo; alleen index.html bijgewerkt."; fi
+else
+  log "media-synchronisatie overgeslagen."
+fi
 
 # --------------------------------------------------------------- afronden
 # Controleer of nginx de bestanden ook echt als video serveert.

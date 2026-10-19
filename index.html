@@ -30,6 +30,10 @@
 #panelVideo .controls{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-top:12px}
 #panelVideo .controls button{box-shadow:none}
 #panelVideo button.ghost{background:transparent;border:1px solid transparent;color:#ccd7ee;font-weight:600;padding:9px 11px}
+#panelVideo [hidden]{display:none!important}
+#panelVideo .controls #backToVideo{margin-left:auto}
+#panelVideo .controls .loop ~ #backToVideo{margin-left:auto}
+#panelVideo .controls #backToVideo ~ #descentFs{margin-left:0}
 #panelVideo button.ghost:hover{background:rgba(255,255,255,.06);transform:none;filter:none}
 #panelVideo .loop{margin:0 0 0 auto;display:flex;align-items:center;gap:8px;font-size:13px;color:#c2ccda;font-weight:500}
 #panelVideo .loop input{width:auto;min-height:0;accent-color:var(--accent)}
@@ -83,6 +87,8 @@ details.more select{width:100%;background:rgba(255,255,255,.03);border-color:rgb
 <button id="pause" class="ghost" type="button">Ⅱ Pauzeren</button>
 <button id="zero" class="ghost" type="button">↺ Begin</button>
 <label class="loop" for="videoLoop"><input id="videoLoop" type="checkbox"> Loop</label>
+<button id="backToVideo" class="ghost" type="button" hidden>← Terug naar de video</button>
+<button id="descentFs" class="ghost" type="button" hidden>⛶ Fullscreen</button>
 </div>
 
 <details class="more">
@@ -101,7 +107,6 @@ details.more select{width:100%;background:rgba(255,255,255,.03);border-color:rgb
 <option value="https://descent.live/veronicanl">Radio Veronica</option>
 <option value="https://descent.live/slam_nl">SLAM!</option>
 <option value="https://descent.live/nporadio2senj">NPO Radio 2 Soul &amp; Jazz</option></select>
-<div class="row" style="margin-top:8px"><button id="backToVideo" class="secondary" type="button" hidden>← Terug naar de video</button><button id="descentFs" class="secondary" type="button" hidden>⛶ Fullscreen</button></div>
 <p class="hint">Descent toont wat de zender nu speelt (via Last.fm) — geen audio of videobestand. Je eigen video blijft in de lijst staan.</p>
 </div>
 </details>
@@ -112,7 +117,7 @@ details.more select{width:100%;background:rgba(255,255,255,.03);border-color:rgb
 <section class="panel" id="panelAudio">
 <header class="panel-head"><h2><span>02</span>Audiobron</h2><div class="meta" id="audioMeta"></div></header>
 <p class="hint">Kies één bron; meters en BPM-analyse volgen die bron.</p>
-<label for="audioSource">Audiobron</label><select id="audioSource"><option value="local">Lokaal audiobestand</option><option value="url">Directe audio-URL</option><option value="embedded">Ingebouwde browser / radio</option><option value="tab">Ander browsertabblad</option></select>
+<select id="audioSource" aria-label="Audiobron"><option value="local">Lokaal audiobestand</option><option value="url">Directe audio-URL</option><option value="embedded">Ingebouwde browser / radio</option><option value="tab">Ander browsertabblad</option></select>
 <div class="audio-mode" data-mode="local"><div class="drop"><label class="filebtn" for="audioFile"><span aria-hidden="true">+</span> Audiobestand<input id="audioFile" type="file" accept="audio/*"></label><audio id="audioPlayer" controls style="display:none;width:100%;margin-top:10px"></audio></div></div>
 <div class="audio-mode" data-mode="url" hidden><div class="drop"><label for="audioUrl">Directe audio-URL</label><input id="audioUrl" type="url" placeholder="https://…/muziek.mp3"><button id="loadAudioUrl" class="secondary" style="margin-top:8px">Open audio-URL</button></div></div>
 <div class="audio-mode" data-mode="embedded" hidden><div class="drop"><label for="stationSelect">Voorkeuze radiowebsites</label><select id="stationSelect"><option value="">Kies een radiowebsite…</option><option value="https://www.radiozenders.fm/">radiozenders.fm</option><option value="https://www.nederland.fm/">nederland.fm</option></select><button id="openStation" class="secondary" style="margin-top:8px">Open geselecteerde radio in ingebouwde browser</button></div>
@@ -124,7 +129,6 @@ details.more select{width:100%;background:rgba(255,255,255,.03);border-color:rgb
 <div class="status" id="audioStatus">Nog geen audio gekoppeld.</div>
 <div class="bar"><div id="level"></div></div>
 <div class="metrics"><div class="metric"><small>Gemeten tempo</small><strong id="detected">—</strong><em>BPM (schatting)</em></div><div class="metric"><small>Audio-niveau</small><strong id="volume">0%</strong><em>live signaal</em></div></div>
-<div class="note">Kies in het browservenster het tabblad met muziek en vink <b>Tabblad-audio delen</b> aan. Dit werkt het best in Chrome of Edge.</div>
 </section>
 <section class="panel full">
 <h2>03 · Live VU-meters & EQ</h2>
@@ -197,13 +201,13 @@ const descentFsExit=$('descentFsExit');
 if(descentFsExit)descentFsExit.onclick=()=>{if(descentFsActive())toggleDescentFs()};
 document.addEventListener('fullscreenchange',updateFsLabel);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&descentWrap.classList.contains('fs')){descentWrap.classList.remove('fs');updateFsLabel()}});
-function showVideo(){if(document.fullscreenElement===descentWrap){document.exitFullscreen().catch(()=>{})}descentWrap.classList.remove('fs');descentWrap.hidden=true;descentFrame.hidden=true;descentFrame.removeAttribute('src');videoHost.hidden=false;$('backToVideo').hidden=true;if(descentFs)descentFs.hidden=true;descentSelect.value='';
+function showVideo(){if(document.fullscreenElement===descentWrap){document.exitFullscreen().catch(()=>{})}descentWrap.classList.remove('fs');descentWrap.hidden=true;descentFrame.hidden=true;descentFrame.removeAttribute('src');videoHost.hidden=false;$('backToVideo').hidden=true;if(descentFs)descentFs.hidden=true;descentSelect.value='';['play','pause','zero'].forEach(id=>{const b=$(id);if(b)b.hidden=false});const lp=document.querySelector('#panelVideo .loop');if(lp)lp.hidden=false;
  const c=clips[Number(videoSelect.value)];
  $('videoStatus').textContent=c?('Video-weergave: '+c.name):'Kies een video of plak een URL.';
  $('videoStatus').className='status good';}
 descentSelect.addEventListener('change',()=>{const u=descentSelect.value;
  if(!u){showVideo();return}
- descentFrame.src=u;descentWrap.hidden=false;descentFrame.hidden=false;videoHost.hidden=true;$('backToVideo').hidden=false;descentFs.hidden=false;updateFsLabel();
+ descentFrame.src=u;descentWrap.hidden=false;descentFrame.hidden=false;videoHost.hidden=true;$('backToVideo').hidden=false;descentFs.hidden=false;updateFsLabel();['play','pause','zero'].forEach(id=>{const b=$(id);if(b)b.hidden=true});const lp=document.querySelector('#panelVideo .loop');if(lp)lp.hidden=true;
  $('videoStatus').textContent='Descent-weergave: '+descentSelect.selectedOptions[0].textContent+' · now playing (geen video). Staat er “Nothing in the air”, dan scrobbelt die zender nu niet.';
  $('videoStatus').className='status good';});
 $('backToVideo').onclick=showVideo;

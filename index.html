@@ -72,6 +72,21 @@ select,input[type=url]{background-color:#0c1426}
 select option,select optgroup{background-color:#0c1426;color:#f2f5fb}
 select option:checked,select option:focus{background-color:#20305a;color:#fff}
 #panelAudio select,#panelVideo .picker select,details.more select{background-color:#0c1426;color:#f2f5fb}
+
+/* eigen keuzelijst: de popup van de os is niet betrouwbaar te stylen */
+.sel{position:relative}
+#panelVideo .picker .sel{flex:1;min-width:0}
+#panelVideo .picker .sel-btn{height:100%}
+.sel-btn{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;background-color:#0c1426;border:1px solid rgba(255,255,255,.12);border-radius:10px;color:#f2f5fb;font:inherit;font-size:14px;font-weight:500;padding:9px 11px;text-align:left;cursor:pointer;box-shadow:none}
+.sel-btn:hover{background-color:#12203c;transform:none;filter:none}
+.sel-btn::after{content:"▾";color:#8fa0c0;font-size:12px;flex:none}
+.sel-menu{position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:80;margin:0;padding:6px;list-style:none;background-color:#0c1426;border:1px solid rgba(255,255,255,.16);border-radius:12px;box-shadow:0 20px 44px rgba(0,0,0,.55);max-height:300px;overflow:auto}
+.sel-menu[hidden]{display:none}
+.sel-menu.up{top:auto;bottom:calc(100% + 6px)}
+.sel-menu li{padding:8px 10px;border-radius:8px;color:#eef2fa;font-size:14px;line-height:1.35;cursor:pointer}
+.sel-menu li:hover{background-color:#20305a;color:#fff}
+.sel-menu li[aria-selected="true"]{background-color:#1b2a4d;color:#fff;font-weight:600}
+.sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 </style>
 </head>
 <body><main>
@@ -170,7 +185,7 @@ select option:checked,select option:focus{background-color:#20305a;color:#fff}
 const $=id=>document.getElementById(id);
 const video=$('video'); let videoUrl=null, stream=null, audioCtx=null, analyser=null, source=null, raf=null, peaks=[], lastBeat=0, tapTimes=[], clips=[], audioUrl=null;
 const BUNDLED_CLIPS=[{name:'nep-beatclip.mp4',url:'media/nep-beatclip.mp4'}];
-const audioSourceSelect=$('audioSource');function setAudioMode(){const am=$('audioMeta');if(am)am.textContent=audioSourceSelect.selectedOptions[0]?.textContent||'';document.querySelectorAll('.audio-mode').forEach(el=>{el.hidden=el.dataset.mode!==audioSourceSelect.value})}audioSourceSelect.addEventListener('change',setAudioMode);setAudioMode();
+const audioSourceSelect=$('audioSource');function setAudioMode(){document.querySelectorAll('.audio-mode').forEach(el=>{el.hidden=el.dataset.mode!==audioSourceSelect.value})}audioSourceSelect.addEventListener('change',setAudioMode);setAudioMode();
 const videoFile=$('videoFile'), videoSelect=$('videoSelect'), videoHost=$('videoHost');
 function renderClips(activeIndex){videoSelect.innerHTML='';clips.forEach((c,i)=>{const o=document.createElement('option');o.value=i;o.textContent=c.name+(c.kind==='bundled'?' · meegeleverd':c.kind==='url'?' · URL':'');o.selected=(i===activeIndex);videoSelect.appendChild(o)});videoSelect.disabled=!clips.length;const m=$('clipMeta');if(m)m.textContent=clips.length+(clips.length===1?' clip':' clips');}
 function loadClip(i){const c=clips[i];if(!c)return;if(typeof showVideo==='function')showVideo();if(videoUrl){URL.revokeObjectURL(videoUrl);videoUrl=null;}
@@ -353,5 +368,59 @@ function analyze(){
  if(now-lastBpmTry>300){lastBpmTry=now;estimateBpm(now)}
  lastFlux=flux;
  raf=requestAnimationFrame(analyze);
-}</script>
+}
+// Vervangt de native dropdown door een eigen lijst die er overal hetzelfde uitziet.
+function enhanceSelect(sel){
+  if(!sel||sel.dataset.enhanced)return;
+  sel.dataset.enhanced='1';
+  const wrap=document.createElement('div'); wrap.className='sel';
+  const btn=document.createElement('button'); btn.type='button'; btn.className='sel-btn';
+  btn.setAttribute('aria-haspopup','listbox'); btn.setAttribute('aria-expanded','false');
+  const menu=document.createElement('ul'); menu.className='sel-menu'; menu.setAttribute('role','listbox'); menu.hidden=true;
+  sel.parentNode.insertBefore(wrap, sel);
+  wrap.appendChild(btn); wrap.appendChild(sel); wrap.appendChild(menu);
+  sel.classList.add('sr-only'); sel.setAttribute('tabindex','-1');
+  const sync=()=>{
+    btn.textContent=sel.selectedOptions[0]?sel.selectedOptions[0].textContent:'';
+    btn.disabled=sel.disabled;
+    [...menu.children].forEach((li,i)=>li.setAttribute('aria-selected',String(i===sel.selectedIndex)));
+  };
+  const build=()=>{
+    menu.innerHTML='';
+    [...sel.options].forEach((o,i)=>{
+      const li=document.createElement('li'); li.setAttribute('role','option');
+      li.textContent=o.textContent; li.dataset.i=String(i);
+      li.addEventListener('click',()=>{
+        sel.selectedIndex=i;
+        sel.dispatchEvent(new Event('change',{bubbles:true}));
+        menu.hidden=true; btn.setAttribute('aria-expanded','false'); sync();
+      });
+      menu.appendChild(li);
+    });
+    sync();
+  };
+  const close=()=>{menu.hidden=true;btn.setAttribute('aria-expanded','false')};
+  let openSelRef=null;
+  btn.addEventListener('click',e=>{
+    e.stopPropagation();
+    if(sel.disabled)return;
+    if(menu.hidden){
+      if(window.__openSel&&window.__openSel!==close)window.__openSel();
+      build();
+      // ruimte onder het veld? zo niet, klapt de lijst naar boven open
+      const r=btn.getBoundingClientRect();
+      const below=window.innerHeight-r.bottom, need=Math.min(300,menu.children.length*38+14);
+      menu.classList.toggle('up',below<need&&r.top>need);
+      window.__openSel=close;
+      menu.hidden=false;btn.setAttribute('aria-expanded','true');
+    }else close();
+  });
+  document.addEventListener('click',e=>{if(!wrap.contains(e.target))close()});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')close()});
+  sel.addEventListener('change',sync);
+  new MutationObserver(()=>build()).observe(sel,{childList:true,subtree:true});
+  build();
+}
+['audioSource','stationSelect','videoSelect','descentSelect'].forEach(id=>enhanceSelect($(id)));
+</script>
 </body></html>

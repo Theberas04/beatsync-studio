@@ -41,6 +41,7 @@ offset in milliseconden om het beeld precies op de tel te leggen.
   - lokaal audiobestand
   - directe audio-URL
   - ingebouwde browser met radiowebsites (o.a. radiozenders.fm en nederland.fm)
+  - **Descent-links** van 11 Nederlandse zenders (Qmusic, KINK, JOE, NPO Radio 2, Radio 10, Sky Radio, Veronica, SLAM!, NPO Radio 2 Soul & Jazz) — direct te kiezen in de dropdown
   - audio van een ander browsertabblad delen
 - **Live VU-meter** met piek- en RMS-waarde in dBFS.
 - **Live spectrum-analyzer** (EQ-weergave).

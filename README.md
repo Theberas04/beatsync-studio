@@ -7,7 +7,7 @@ Alles draait lokaal in je browser: er worden geen bestanden geüpload.
 
 ## Functies
 
-- Meerdere lokale video's kiezen en er tussen wisselen.
+- Meerdere lokale video's kiezen **of een video-URL plakken**; alles komt in één keuzelijst terecht.
 - Audiobron kiezen via een dropdown:
   - lokaal audiobestand
   - directe audio-URL
@@ -21,7 +21,7 @@ Alles draait lokaal in je browser: er worden geen bestanden geüpload.
 ## Gebruik
 
 1. Open `index.html` in Chrome of Edge.
-2. Kies een of meer video's en selecteer de video die je wilt afspelen.
+2. Kies een of meer video's, of plak een directe video-URL en klik op **URL laden**. Alles komt in de keuzelijst; wisselen kan altijd.
 3. Kies onder **Audiobron** de bron die je wilt gebruiken.
 4. Stel zo nodig BPM, offset en snelheid in.
 

@@ -31,6 +31,7 @@ FILES=(
   "deploy/proxmox/update-site.sh"
   "deploy/proxmox/README.md"
   "index.html"
+  "meters.html"
 )
 
 log()  { printf '\033[1;36m==>\033[0m %s\n' "$*"; }

@@ -161,7 +161,7 @@ select option:checked,select option:focus{background-color:#20305a;color:#fff}
 <div class="metrics"><div class="metric"><small>Gemeten tempo</small><strong id="detected">—</strong><em>BPM (schatting)</em></div><div class="metric"><small>Audio-niveau</small><strong id="volume">0%</strong><em>live signaal</em></div></div>
 </section>
 <section class="panel full">
-<h2>03 · Live VU-meters & EQ</h2>
+<div class="panel-head"><h2>03 · Live VU-meters &amp; EQ</h2><button id="popMeters" class="secondary">⧉ Eigen tabblad</button></div>
 <p class="hint">De meters en frequentie-analyzer reageren live op de audio die je hierboven deelt.</p>
 <div class="visuals">
  <div class="vizbox"><div class="viztitle"><b>VU-meter · signaalniveau</b><span id="vuReadout">−∞ dB</span></div>
@@ -280,6 +280,27 @@ $('sync').onclick=()=>{const off=Number($('offset').value||0)/1000;video.current
 BUNDLED_CLIPS.forEach(c=>clips.push({kind:'bundled',name:c.name,url:c.url}));
 if(clips.length){renderClips(0);loadClip(0);$('videoStatus').textContent='Meegeleverde clip klaargezet. Kies een bestand of plak een URL voor iets anders.';$('videoStatus').className='status good';}
 updateVideoEmpty();
+// Het losse meters-venster (meters.html) leest de analyser rechtstreeks uit dit tabblad.
+// Audio blijft hier spelen, ook als dit tabblad naar de achtergrond gaat.
+const bsMeters={state:{bpm:'—',target:'',speed:'—',status:'',clip:''},getAnalyser:()=>analyser};
+window.bsMeters=bsMeters;
+let metersWin=null;
+function syncMetersState(){
+ const st=bsMeters.state;
+ st.bpm=$('detected').textContent;
+ st.target=$('targetBpm').value;
+ st.speed=$('speedVal').textContent;
+ st.status=$('audioStatus').textContent;
+ st.clip=$('clipMeta').textContent;
+ $('popMeters').classList.toggle('active',!!(metersWin&&!metersWin.closed));
+}
+setInterval(syncMetersState,400);
+$('popMeters').onclick=()=>{
+ if(metersWin&&!metersWin.closed){metersWin.focus();return}
+ metersWin=window.open('meters.html','bsync-meters','width=1180,height=760');
+ if(!metersWin){$('audioStatus').textContent='Los venster geblokkeerd door de browser. Sta pop-ups toe voor deze site.';$('audioStatus').className='status warn'}
+ syncMetersState();
+};
 $('reset').onclick=()=>{$('videoBpm').value=120;$('targetBpm').value=120;$('offset').value=0;video.playbackRate=1;calcSpeed();$('syncStatus').textContent='Instellingen teruggezet.'};
 $('beat').onclick=()=>{const now=performance.now();tapTimes=tapTimes.filter(t=>now-t<2500);tapTimes.push(now);if(tapTimes.length>=3){const gaps=[];for(let i=1;i<tapTimes.length;i++)gaps.push(tapTimes[i]-tapTimes[i-1]);const avg=gaps.reduce((a,b)=>a+b,0)/gaps.length;const bpm=Math.round(60000/avg);if(bpm>=30&&bpm<=300){$('targetBpm').value=bpm;calcSpeed();$('syncStatus').textContent='Tap-tempo: '+bpm+' BPM';}}};
 const connectSharedAudio=async()=>{if(stream){try{stream.getTracks().forEach(t=>t.stop())}catch(e){}stream=null}const shareOpts={video:true,audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false},selfBrowserSurface:'exclude',surfaceSwitching:'include',systemAudio:'include',monitorTypeSurfaces:'include'};try{stream=await navigator.mediaDevices.getDisplayMedia(shareOpts);const tracks=stream.getAudioTracks();if(!tracks.length){stream.getTracks().forEach(t=>t.stop());stream=null;$('audioStatus').textContent='Er is geen audio meegestuurd. Kies een tabblad (geen venster) en zet ‘Tabblad-audio delen’ aan.';$('audioStatus').className='status warn';return}

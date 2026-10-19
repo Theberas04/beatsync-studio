@@ -27,8 +27,24 @@ offset in milliseconden om het beeld precies op de tel te leggen.
 
 | | |
 |---|---|
-| ![Video via een URL](docs/screenshots/video-via-url.jpg) | ![Meerdere bronnen in één lijst](docs/screenshots/keuzelijst.jpg) |
-| **Video via een URL** — plak een directe link naar een MP4/WebM; hij komt naast je lokale bestanden in de lijst. | **Alles in één keuzelijst** — de meegeleverde clip (🎬), eigen bestanden en URL's (🔗) door elkaar. |
+| ![Jouw video](docs/screenshots/jouw-video.jpg) | ![Audiobron](docs/screenshots/audiobron.jpg) |
+| **Jouw video** — kies een clip uit de lijst of voeg bestanden toe; daaronder de afspeelknoppen en de loop-schakelaar. De video-URL en de Descent-weergave zitten achter *Meer opties*. | **Audiobron** — lokaal bestand, directe URL, ingebouwde radio of tabbladaudio. De meters en de BPM-schatting volgen de gekozen bron. |
+
+### Meer opties: video-URL en Descent
+
+Eén regel voor een directe link naar een videobestand, en een keuzelijst met elf
+Descent-pagina's. Dichtgeklapt tot je het nodig hebt.
+
+![Meer opties in het videopaneel](docs/screenshots/meer-opties.jpg)
+
+### Descent-weergave, ook schermvullend
+
+Kies een zender en de now-playing-pagina verschijnt in het videogebied. Met **⛶ Fullscreen**
+gaat hij over het hele scherm; **Esc** of de sluitknop brengt je terug, **← Terug naar de
+video** zet je eigen video weer neer.
+
+| ![Descent-weergave](docs/screenshots/descent.jpg) | ![Descent fullscreen](docs/screenshots/descent-fullscreen.jpg) |
+|---|---|
 
 ### De hele app
 
@@ -51,7 +67,7 @@ offset in milliseconden om het beeld precies op de tel te leggen.
 ## Gebruik
 
 1. Open de [live-versie](https://theberas04.github.io/beatsync-studio/) of `index.html` in Chrome of Edge.
-2. Kies een of meer video's, of plak een directe video-URL en klik op **URL laden**. Alles komt in de keuzelijst; wisselen kan altijd.
+2. Kies een video uit de lijst of voeg bestanden toe met **+ Bestanden**. Voor een directe link: open **Meer opties**, plak de URL en klik op **URL laden**.
 3. Kies onder **Audiobron** de bron die je wilt gebruiken.
 4. Stel zo nodig BPM, offset en snelheid in.
 
@@ -61,10 +77,8 @@ tabblad kiezen en **audio delen** aanvinken. Werkt het beste in Chrome of Edge.
 ### Meegeleverde clip
 
 `media/nep-beatclip.mp4` hoort bij de site en staat bij het openen al in de keuzelijst
-(label 🎬). Op de container hoort hij in `/var/www/beatsync/media/` te staan;
-`update-from-github.sh` zet hem daar samen met `index.html` neer.
-
-![Meegeleverde clip in de keuzelijst](docs/screenshots/video-meegeleverd.jpg)
+(met het label *meegeleverd*). Op de container hoort hij in `/var/www/beatsync/media/` te
+staan; `update-from-github.sh` zet hem daar samen met `index.html` neer.
 
 ### Video via een URL
 

@@ -52,7 +52,7 @@ video** zet je eigen video weer neer.
 
 ## Functies
 
-- **Video's**: eigen bestanden kiezen of een directe video-URL plakken — alles in één keuzelijst. Er zit geen video bij de app; je begint met je eigen beeld.
+- **Video's**: eigen bestanden kiezen, een directe video-URL plakken, of de meegeleverde clip gebruiken — alles in één keuzelijst.
 - **Descent-weergave als beeld**: 11 now-playing-pagina's (Qmusic, KINK, KINK Distortion, JOE, Music Starts Here, NPO Radio 2, Radio 10, Sky Radio, Veronica, SLAM!, NPO Radio 2 Soul & Jazz) openen in het videopaneel, met **fullscreen** (knop, of Esc om te sluiten) en één klik terug naar je video.
 - **Audiobron** via een dropdown:
   - lokaal audiobestand
@@ -67,7 +67,7 @@ video** zet je eigen video weer neer.
 ## Gebruik
 
 1. Open de [live-versie](https://theberas04.github.io/beatsync-studio/) of `index.html` in Chrome of Edge.
-2. Voeg je video toe met **+ Bestanden** (of plak een directe link onder **Meer opties**). Er wordt niets vooraf geladen: de app start leeg.
+2. Kies de meegeleverde clip, of voeg je eigen video toe met **+ Bestanden** (of plak een directe link onder **Meer opties**).
 3. Kies onder **Audiobron** de bron die je wilt gebruiken.
 4. Stel zo nodig BPM, offset en snelheid in.
 
@@ -75,6 +75,13 @@ Voor het delen van tabbladaudio kies je in de browserdialoog het tabblad waarop 
 speelt en zet je **Tabblad-audio delen** aan. Dit BeatSync-tabblad wordt bewust niet
 aangeboden, zodat de app niet zijn eigen geluid gaat analyseren. Werkt het beste in Chrome
 of Edge.
+
+### Meegeleverde clip
+
+`media/nep-beatclip.mp4` hoort bij de site en staat bij het openen al in de keuzelijst
+(met het label *meegeleverd*). Het is een NEP-ident van 14 seconden, 1920×1080, H.264.
+Op de container hoort hij in `/var/www/beatsync/media/` te staan; `update-from-github.sh`
+zet hem daar met een sha256-controle en ruimt bestanden op die niet meer in de repo staan.
 
 ### Video via een URL
 
@@ -134,7 +141,7 @@ Diagnose en probleemoplossing (redirect-lus, certificaatdekking, origin-instelli
 
 ```
 index.html                     de hele app: HTML, CSS en JS in één bestand
-media/                         leeg; hier komen mediabestanden als je die toevoegt
+media/nep-beatclip.mp4         meegeleverde clip
 docs/screenshots/              beelden voor deze README
 deploy/proxmox/install.sh      one-liner installatie
 deploy/proxmox/update-from-github.sh   site + media bijwerken in een bestaande container

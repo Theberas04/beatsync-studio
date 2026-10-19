@@ -161,7 +161,7 @@ details.more select{width:100%;background:rgba(255,255,255,.03);border-color:rgb
 <script>
 const $=id=>document.getElementById(id);
 const video=$('video'); let videoUrl=null, stream=null, audioCtx=null, analyser=null, source=null, raf=null, peaks=[], lastBeat=0, tapTimes=[], clips=[], audioUrl=null;
-const BUNDLED_CLIPS=[{name:'nep-beatclip.mp4',url:'media/nep-beatclip.mp4'},{name:'nep-beatclip-rings.mp4',url:'media/nep-beatclip-rings.mp4'},{name:'nep-beatclip-synthwave.mp4',url:'media/nep-beatclip-synthwave.mp4'},{name:'nep-beatclip-neon.mp4',url:'media/nep-beatclip-neon.mp4'}];
+const BUNDLED_CLIPS=[{name:'nep-beatclip-rings.mp4',url:'media/nep-beatclip-rings.mp4'},{name:'nep-beatclip-synthwave.mp4',url:'media/nep-beatclip-synthwave.mp4'},{name:'nep-beatclip-neon.mp4',url:'media/nep-beatclip-neon.mp4'},{name:'nep-beatclip.mp4',url:'media/nep-beatclip.mp4'}];
 const audioSourceSelect=$('audioSource');function setAudioMode(){const am=$('audioMeta');if(am)am.textContent=audioSourceSelect.selectedOptions[0]?.textContent||'';document.querySelectorAll('.audio-mode').forEach(el=>{el.hidden=el.dataset.mode!==audioSourceSelect.value})}audioSourceSelect.addEventListener('change',setAudioMode);setAudioMode();
 const videoFile=$('videoFile'), videoSelect=$('videoSelect'), videoHost=$('videoHost');
 function renderClips(activeIndex){videoSelect.innerHTML='';clips.forEach((c,i)=>{const o=document.createElement('option');o.value=i;o.textContent=c.name+(c.kind==='bundled'?' · meegeleverd':c.kind==='url'?' · URL':'');o.selected=(i===activeIndex);videoSelect.appendChild(o)});videoSelect.disabled=!clips.length;const m=$('clipMeta');if(m)m.textContent=clips.length+(clips.length===1?' clip':' clips');}

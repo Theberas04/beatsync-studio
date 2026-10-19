@@ -52,7 +52,7 @@ video** zet je eigen video weer neer.
 
 ## Functies
 
-- **Video's**: meerdere lokale bestanden kiezen, een video-URL plakken, of een van de vier meegeleverde clips gebruiken — alles in één keuzelijst.
+- **Video's**: meerdere lokale bestanden kiezen, een video-URL plakken, of de meegeleverde clip gebruiken — alles in één keuzelijst.
 - **Descent-weergave als beeld**: 11 now-playing-pagina's (Qmusic, KINK, KINK Distortion, JOE, Music Starts Here, NPO Radio 2, Radio 10, Sky Radio, Veronica, SLAM!, NPO Radio 2 Soul & Jazz) openen in het videopaneel, met **fullscreen** (knop, of Esc om te sluiten) en één klik terug naar je video.
 - **Audiobron** via een dropdown:
   - lokaal audiobestand
@@ -74,21 +74,11 @@ video** zet je eigen video weer neer.
 Voor het delen van tabblad- of schermaudio moet je in de browserdialoog het juiste
 tabblad kiezen en **audio delen** aanvinken. Werkt het beste in Chrome of Edge.
 
-### Meegeleverde clips
+### Meegeleverde clip
 
-Vier clips horen bij de site en staan bij het openen al in de keuzelijst (met het label
-*meegeleverd*). Alle vier zijn 1920×1080, H.264, en lopen naadloos in de lus:
-
-| Bestand | Duur | Beeld |
-|---|---|---|
-| `media/nep-beatclip.mp4` | 20 s | NEP-ident met kleurvlakken |
-| `media/nep-beatclip-rings.mp4` | 10 s | neon ringen die naar het midden lopen |
-| `media/nep-beatclip-synthwave.mp4` | 15 s | retro zon boven een neonraster |
-| `media/nep-beatclip-neon.mp4` | 20 s | neon blob-vormen |
-
-Op de container horen ze in `/var/www/beatsync/media/` te staan; `update-from-github.sh`
-haalt de lijst uit de repo en zet ontbrekende bestanden erbij, met een sha256-controle per
-bestand.
+`media/nep-beatclip.mp4` hoort bij de site en staat bij het openen al in de keuzelijst
+(met het label *meegeleverd*). Op de container hoort hij in `/var/www/beatsync/media/` te
+staan; `update-from-github.sh` zet hem daar samen met `index.html` neer.
 
 ### Video via een URL
 

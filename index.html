@@ -87,6 +87,12 @@ select option:checked,select option:focus{background-color:#20305a;color:#fff}
 .sel-menu li:hover{background-color:#20305a;color:#fff}
 .sel-menu li[aria-selected="true"]{background-color:#1b2a4d;color:#fff;font-weight:600}
 .sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+.video-empty{display:grid;place-content:center;gap:6px;text-align:center;aspect-ratio:16/9;max-height:440px;min-height:220px;padding:24px;color:#8795b3;background:repeating-linear-gradient(45deg,rgba(255,255,255,.015) 0 12px,transparent 12px 24px)}
+.video-empty[hidden]{display:none}
+.video-empty strong{color:#dce4f5;font-size:15px;font-weight:600}
+.video-empty span{font-size:12.5px;max-width:34ch;line-height:1.55}
+.video-empty em{font-style:normal;color:#b9c6e2}
 </style>
 </head>
 <body><main>
@@ -101,6 +107,7 @@ select option:checked,select option:focus{background-color:#20305a;color:#fff}
 </div>
 
 <div class="stage">
+<div id="videoEmpty" class="video-empty"><strong>Nog geen video</strong><span>Voeg een bestand toe met <em>+ Bestanden</em>, of plak een directe video-URL onder <em>Meer opties</em>.</span></div>
 <div id="descentWrap" hidden><button id="descentFsExit" class="secondary" style="display:none;position:absolute;top:12px;right:12px;z-index:2;background:#0c1426ee;border:1px solid #405174;border-radius:8px;padding:8px 12px;color:#fff;cursor:pointer">✕ Sluiten (Esc)</button><iframe id="descentFrame" title="Descent now playing" style="display:block;width:100%;height:420px;border:1px solid #405174;border-radius:12px;background:#05070c" allow="autoplay; encrypted-media; fullscreen; picture-in-picture"></iframe></div>
 <div id="videoHost"><video id="video" controls playsinline></video></div>
 </div>
@@ -134,8 +141,8 @@ select option:checked,select option:focus{background-color:#20305a;color:#fff}
 </div>
 </details>
 
-<div class="status" id="videoStatus">Kies eerst een video.</div>
-<p class="foot"><strong>nep-beatclip.mp4</strong> staat al klaar · alles blijft op je apparaat</p>
+<div class="status" id="videoStatus">Nog geen video gekozen.</div>
+<p class="foot">Je video blijft op je eigen apparaat · er wordt niets geüpload</p>
 </section>
 <section class="panel" id="panelAudio">
 <header class="panel-head"><h2><span>02</span>Audiobron</h2><div class="meta" id="audioMeta"></div></header>
@@ -184,10 +191,11 @@ select option:checked,select option:focus{background-color:#20305a;color:#fff}
 <script>
 const $=id=>document.getElementById(id);
 const video=$('video'); let videoUrl=null, stream=null, audioCtx=null, analyser=null, source=null, raf=null, peaks=[], lastBeat=0, tapTimes=[], clips=[], audioUrl=null;
-const BUNDLED_CLIPS=[{name:'nep-beatclip.mp4',url:'media/nep-beatclip.mp4?v=2026-10-19b'}];
+const BUNDLED_CLIPS=[];
 const audioSourceSelect=$('audioSource');function setAudioMode(){document.querySelectorAll('.audio-mode').forEach(el=>{el.hidden=el.dataset.mode!==audioSourceSelect.value})}audioSourceSelect.addEventListener('change',setAudioMode);setAudioMode();
 const videoFile=$('videoFile'), videoSelect=$('videoSelect'), videoHost=$('videoHost');
-function renderClips(activeIndex){videoSelect.innerHTML='';clips.forEach((c,i)=>{const o=document.createElement('option');o.value=i;o.textContent=c.name+(c.kind==='bundled'?' · meegeleverd':c.kind==='url'?' · URL':'');o.selected=(i===activeIndex);videoSelect.appendChild(o)});videoSelect.disabled=!clips.length;const m=$('clipMeta');if(m)m.textContent=clips.length+(clips.length===1?' clip':' clips');}
+function renderClips(activeIndex){videoSelect.innerHTML='';clips.forEach((c,i)=>{const o=document.createElement('option');o.value=i;o.textContent=c.name+(c.kind==='bundled'?' · meegeleverd':c.kind==='url'?' · URL':'');o.selected=(i===activeIndex);videoSelect.appendChild(o)});videoSelect.disabled=!clips.length;const m=$('clipMeta');if(m)m.textContent=clips.length?(clips.length+(clips.length===1?' clip':' clips')):'';updateVideoEmpty();}
+function updateVideoEmpty(){const e=$('videoEmpty');if(!e)return;const w=document.getElementById('descentWrap');const leeg=!clips.length&&(!w||w.hidden);e.hidden=!leeg;videoHost.hidden=leeg;['play','pause','zero'].forEach(id=>{const b=$(id);if(b&&!b.hidden)b.disabled=!clips.length});}
 function loadClip(i){const c=clips[i];if(!c)return;if(typeof showVideo==='function')showVideo();if(videoUrl){URL.revokeObjectURL(videoUrl);videoUrl=null;}
  if(c.kind==='file'){videoUrl=URL.createObjectURL(c.file);video.src=videoUrl;}else{video.src=c.url;}
  videoHost.innerHTML='';videoHost.appendChild(video);video.load();video.loop=$('videoLoop').checked;
@@ -224,13 +232,14 @@ const descentFsExit=$('descentFsExit');
 if(descentFsExit)descentFsExit.onclick=()=>{if(descentFsActive())toggleDescentFs()};
 document.addEventListener('fullscreenchange',updateFsLabel);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&descentWrap.classList.contains('fs')){descentWrap.classList.remove('fs');updateFsLabel()}});
-function showVideo(){if(document.fullscreenElement===descentWrap){document.exitFullscreen().catch(()=>{})}descentWrap.classList.remove('fs');descentWrap.hidden=true;descentFrame.hidden=true;descentFrame.removeAttribute('src');videoHost.hidden=false;$('backToVideo').hidden=true;if(descentFs)descentFs.hidden=true;descentSelect.value='';['play','pause','zero'].forEach(id=>{const b=$(id);if(b)b.hidden=false});const lp=document.querySelector('#panelVideo .loop');if(lp)lp.hidden=false;
+function showVideo(){if(document.fullscreenElement===descentWrap){document.exitFullscreen().catch(()=>{})}descentWrap.classList.remove('fs');descentWrap.hidden=true;descentFrame.hidden=true;descentFrame.removeAttribute('src');$('backToVideo').hidden=true;if(descentFs)descentFs.hidden=true;descentSelect.value='';['play','pause','zero'].forEach(id=>{const b=$(id);if(b)b.hidden=false});const lp=document.querySelector('#panelVideo .loop');if(lp)lp.hidden=false;
+ updateVideoEmpty();
  const c=clips[Number(videoSelect.value)];
  $('videoStatus').textContent=c?('Video-weergave: '+c.name):'Kies een video of plak een URL.';
  $('videoStatus').className='status good';}
 descentSelect.addEventListener('change',()=>{const u=descentSelect.value;
  if(!u){showVideo();return}
- descentFrame.src=u;descentWrap.hidden=false;descentFrame.hidden=false;videoHost.hidden=true;$('backToVideo').hidden=false;descentFs.hidden=false;updateFsLabel();['play','pause','zero'].forEach(id=>{const b=$(id);if(b)b.hidden=true});const lp=document.querySelector('#panelVideo .loop');if(lp)lp.hidden=true;
+ descentFrame.src=u;descentWrap.hidden=false;descentFrame.hidden=false;videoHost.hidden=true;$('backToVideo').hidden=false;descentFs.hidden=false;updateFsLabel();updateVideoEmpty();['play','pause','zero'].forEach(id=>{const b=$(id);if(b)b.hidden=true});const lp=document.querySelector('#panelVideo .loop');if(lp)lp.hidden=true;
  $('videoStatus').textContent='Descent-weergave: '+descentSelect.selectedOptions[0].textContent+' · now playing (geen video). Staat er “Nothing in the air”, dan scrobbelt die zender nu niet.';
  $('videoStatus').className='status good';});
 $('backToVideo').onclick=showVideo;
@@ -268,6 +277,7 @@ video.loop=$('videoLoop').checked;
 $('sync').onclick=()=>{const off=Number($('offset').value||0)/1000;video.currentTime=Math.max(0,video.currentTime+off);video.play().catch(()=>{});$('syncStatus').textContent='Video gestart met offset '+off.toFixed(3)+' s. Audio in het andere tabblad blijft door de browser bestuurd.';$('syncStatus').className='status good';};
 BUNDLED_CLIPS.forEach(c=>clips.push({kind:'bundled',name:c.name,url:c.url}));
 if(clips.length){renderClips(0);loadClip(0);$('videoStatus').textContent='Meegeleverde clip klaargezet. Kies een bestand of plak een URL voor iets anders.';$('videoStatus').className='status good';}
+updateVideoEmpty();
 $('reset').onclick=()=>{$('videoBpm').value=120;$('targetBpm').value=120;$('offset').value=0;video.playbackRate=1;calcSpeed();$('syncStatus').textContent='Instellingen teruggezet.'};
 $('beat').onclick=()=>{const now=performance.now();tapTimes=tapTimes.filter(t=>now-t<2500);tapTimes.push(now);if(tapTimes.length>=3){const gaps=[];for(let i=1;i<tapTimes.length;i++)gaps.push(tapTimes[i]-tapTimes[i-1]);const avg=gaps.reduce((a,b)=>a+b,0)/gaps.length;const bpm=Math.round(60000/avg);if(bpm>=30&&bpm<=300){$('targetBpm').value=bpm;calcSpeed();$('syncStatus').textContent='Tap-tempo: '+bpm+' BPM';}}};
 const connectSharedAudio=async()=>{if(stream){try{stream.getTracks().forEach(t=>t.stop())}catch(e){}stream=null}const shareOpts={video:true,audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false},selfBrowserSurface:'exclude',surfaceSwitching:'include',systemAudio:'include',monitorTypeSurfaces:'include'};try{stream=await navigator.mediaDevices.getDisplayMedia(shareOpts);const tracks=stream.getAudioTracks();if(!tracks.length){stream.getTracks().forEach(t=>t.stop());stream=null;$('audioStatus').textContent='Er is geen audio meegestuurd. Kies een tabblad (geen venster) en zet ‘Tabblad-audio delen’ aan.';$('audioStatus').className='status warn';return}

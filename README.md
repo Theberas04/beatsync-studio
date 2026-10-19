@@ -28,7 +28,7 @@ offset in milliseconden om het beeld precies op de tel te leggen.
 | | |
 |---|---|
 | ![Jouw video](docs/screenshots/jouw-video.jpg) | ![Audiobron](docs/screenshots/audiobron.jpg) |
-| **Jouw video** — kies een clip uit de lijst of voeg bestanden toe; daaronder de afspeelknoppen en de loop-schakelaar. De video-URL en de Descent-weergave zitten achter *Meer opties*. | **Audiobron** — lokaal bestand, directe URL, ingebouwde radio of tabbladaudio. De meters en de BPM-schatting volgen de gekozen bron. |
+| **Jouw video** — voeg je eigen bestanden toe (of kies een clip uit de lijst); daaronder de afspeelknoppen en de loop-schakelaar. De video-URL en de Descent-weergave zitten achter *Meer opties*. | **Audiobron** — lokaal bestand, directe URL, ingebouwde radio of tabbladaudio. De meters en de BPM-schatting volgen de gekozen bron. |
 
 ### Meer opties: video-URL en Descent
 
@@ -52,7 +52,7 @@ video** zet je eigen video weer neer.
 
 ## Functies
 
-- **Video's**: meerdere lokale bestanden kiezen, een video-URL plakken, of de meegeleverde clip gebruiken — alles in één keuzelijst.
+- **Video's**: eigen bestanden kiezen of een directe video-URL plakken — alles in één keuzelijst. Er zit geen video bij de app; je begint met je eigen beeld.
 - **Descent-weergave als beeld**: 11 now-playing-pagina's (Qmusic, KINK, KINK Distortion, JOE, Music Starts Here, NPO Radio 2, Radio 10, Sky Radio, Veronica, SLAM!, NPO Radio 2 Soul & Jazz) openen in het videopaneel, met **fullscreen** (knop, of Esc om te sluiten) en één klik terug naar je video.
 - **Audiobron** via een dropdown:
   - lokaal audiobestand
@@ -67,7 +67,7 @@ video** zet je eigen video weer neer.
 ## Gebruik
 
 1. Open de [live-versie](https://theberas04.github.io/beatsync-studio/) of `index.html` in Chrome of Edge.
-2. Kies een video uit de lijst of voeg bestanden toe met **+ Bestanden**. Voor een directe link: open **Meer opties**, plak de URL en klik op **URL laden**.
+2. Voeg je video toe met **+ Bestanden** (of plak een directe link onder **Meer opties**). Er wordt niets vooraf geladen: de app start leeg.
 3. Kies onder **Audiobron** de bron die je wilt gebruiken.
 4. Stel zo nodig BPM, offset en snelheid in.
 
@@ -75,12 +75,6 @@ Voor het delen van tabbladaudio kies je in de browserdialoog het tabblad waarop 
 speelt en zet je **Tabblad-audio delen** aan. Dit BeatSync-tabblad wordt bewust niet
 aangeboden, zodat de app niet zijn eigen geluid gaat analyseren. Werkt het beste in Chrome
 of Edge.
-
-### Meegeleverde clip
-
-`media/nep-beatclip.mp4` hoort bij de site en staat bij het openen al in de keuzelijst
-(met het label *meegeleverd*). Op de container hoort hij in `/var/www/beatsync/media/` te
-staan; `update-from-github.sh` zet hem daar samen met `index.html` neer.
 
 ### Video via een URL
 
@@ -140,7 +134,7 @@ Diagnose en probleemoplossing (redirect-lus, certificaatdekking, origin-instelli
 
 ```
 index.html                     de hele app: HTML, CSS en JS in één bestand
-media/nep-beatclip.mp4         meegeleverde clip
+media/                         leeg; hier komen mediabestanden als je die toevoegt
 docs/screenshots/              beelden voor deze README
 deploy/proxmox/install.sh      one-liner installatie
 deploy/proxmox/update-from-github.sh   site + media bijwerken in een bestaande container

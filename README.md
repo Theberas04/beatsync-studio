@@ -71,8 +71,10 @@ video** zet je eigen video weer neer.
 3. Kies onder **Audiobron** de bron die je wilt gebruiken.
 4. Stel zo nodig BPM, offset en snelheid in.
 
-Voor het delen van tabblad- of schermaudio moet je in de browserdialoog het juiste
-tabblad kiezen en **audio delen** aanvinken. Werkt het beste in Chrome of Edge.
+Voor het delen van tabbladaudio kies je in de browserdialoog het tabblad waarop de muziek
+speelt en zet je **Tabblad-audio delen** aan. Dit BeatSync-tabblad wordt bewust niet
+aangeboden, zodat de app niet zijn eigen geluid gaat analyseren. Werkt het beste in Chrome
+of Edge.
 
 ### Meegeleverde clip
 

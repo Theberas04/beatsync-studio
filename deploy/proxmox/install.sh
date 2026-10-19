@@ -26,6 +26,7 @@ FILES=(
   "deploy/proxmox/add-cloudflare-tunnel.sh"
   "deploy/proxmox/check-tunnel.sh"
   "deploy/proxmox/fix-loop.sh"
+  "deploy/proxmox/update-from-github.sh"
   "deploy/proxmox/nginx-beatsync.conf"
   "deploy/proxmox/update-site.sh"
   "deploy/proxmox/README.md"
@@ -64,7 +65,7 @@ grep -qi 'beatsync' "$TARGET_DIR/index.html"       || die "index.html lijkt niet
 grep -q 'server {'  "$TARGET_DIR/nginx-beatsync.conf" || die "nginx-config lijkt onvolledig."
 grep -q 'pct create' "$TARGET_DIR/create-beatsync-lxc.sh" || die "installatiescript lijkt onvolledig."
 for script in create-beatsync-lxc.sh provision-beatsync.sh fix-lxc-start.sh \
-                 add-cloudflare-tunnel.sh fix-loop.sh check-tunnel.sh update-site.sh; do
+                 add-cloudflare-tunnel.sh fix-loop.sh check-tunnel.sh update-site.sh update-from-github.sh; do
   bash -n "$TARGET_DIR/$script" || die "$script heeft een syntaxfout."
 done
 log "  alle bestanden compleet en syntactisch correct"

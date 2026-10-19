@@ -17,6 +17,8 @@
 <section class="panel">
 <h2>01 · Jouw video</h2>
 <div class="drop"><label for="videoFile">Kies één of meerdere videobestanden</label><input id="videoFile" type="file" accept="video/*" multiple></div>
+<div class="actions" style="align-items:stretch"><input id="videoUrl" type="url" placeholder="https://voorbeeld.nl/video.mp4" aria-label="Video-URL" style="flex:1;min-width:220px"><button id="addVideoUrl" class="secondary" type="button">URL laden</button></div>
+<p class="hint">Directe link naar een videobestand (MP4, WebM, Ogg, MOV). Een YouTube- of Vimeo-pagina is geen videobestand en werkt hier niet.</p>
 <div class="actions"><select id="videoSelect" aria-label="Selecteer video" disabled><option>Geen video's geladen</option></select></div>
 <div id="videoHost"><video id="video" controls playsinline></video></div>
 <div class="actions"><button id="play">▶ Video afspelen</button><button id="pause" class="secondary">Ⅱ Pauzeren</button><button id="zero" class="secondary">↺ Terug naar begin</button></div>
@@ -72,12 +74,29 @@
 </main>
 <script>
 const $=id=>document.getElementById(id);
-const video=$('video'); let videoUrl=null, stream=null, audioCtx=null, analyser=null, source=null, raf=null, peaks=[], lastBeat=0, tapTimes=[], videoFiles=[], audioUrl=null;
+const video=$('video'); let videoUrl=null, stream=null, audioCtx=null, analyser=null, source=null, raf=null, peaks=[], lastBeat=0, tapTimes=[], clips=[], audioUrl=null;
 const audioSourceSelect=$('audioSource');function setAudioMode(){document.querySelectorAll('.audio-mode').forEach(el=>{el.hidden=el.dataset.mode!==audioSourceSelect.value})}audioSourceSelect.addEventListener('change',setAudioMode);setAudioMode();
 const videoFile=$('videoFile'), videoSelect=$('videoSelect'), videoHost=$('videoHost');
-videoFile.addEventListener('change',e=>{videoFiles=Array.from(e.target.files||[]);videoSelect.innerHTML='';videoFiles.forEach((f,i)=>{const o=document.createElement('option');o.value=i;o.textContent=f.name;videoSelect.appendChild(o)});videoSelect.disabled=!videoFiles.length;if(videoFiles.length)loadLocalVideo(0);});
-function loadLocalVideo(i){if(!videoFiles[i])return;if(videoUrl)URL.revokeObjectURL(videoUrl);videoUrl=URL.createObjectURL(videoFiles[i]);videoHost.innerHTML='';videoHost.appendChild(video);video.src=videoUrl;video.load();video.loop=$('videoLoop').checked;$('videoStatus').textContent=videoFiles[i].name+' ('+(Number(i)+1)+'/'+videoFiles.length+')';$('videoStatus').className='status good';}
-videoSelect.addEventListener('change',()=>loadLocalVideo(Number(videoSelect.value)));
+function renderClips(activeIndex){videoSelect.innerHTML='';clips.forEach((c,i)=>{const o=document.createElement('option');o.value=i;o.textContent=(c.kind==='url'?'🔗 ':'')+c.name;o.selected=(i===activeIndex);videoSelect.appendChild(o)});videoSelect.disabled=!clips.length;}
+function loadClip(i){const c=clips[i];if(!c)return;if(videoUrl){URL.revokeObjectURL(videoUrl);videoUrl=null;}
+ if(c.kind==='file'){videoUrl=URL.createObjectURL(c.file);video.src=videoUrl;}else{video.src=c.url;}
+ videoHost.innerHTML='';videoHost.appendChild(video);video.load();video.loop=$('videoLoop').checked;
+ $('videoStatus').textContent=c.name+' ('+(Number(i)+1)+'/'+clips.length+')'+(c.kind==='url'?' · via URL':'');$('videoStatus').className='status good';}
+videoFile.addEventListener('change',e=>{const picked=Array.from(e.target.files||[]).map(f=>({kind:'file',name:f.name,file:f}));
+ if(!picked.length)return;
+ const firstNew=clips.length;clips=clips.concat(picked);renderClips(firstNew);loadClip(firstNew);
+ $('videoStatus').textContent=(picked.length>1?picked.length+' bestanden toegevoegd':'Bestand toegevoegd')+' · '+clips.length+' video(s) in de lijst · nu: '+clips[firstNew].name;
+ $('videoStatus').className='status good';});
+function addVideoUrlClip(){const input=$('videoUrl');let raw=(input.value||'').trim();if(!raw)return;
+ if(!/^https?:\/\//i.test(raw))raw='https://'+raw;
+ let name;try{const u=new URL(raw);name=decodeURIComponent(u.pathname.split('/').filter(Boolean).pop()||u.hostname)+' · '+u.hostname;}catch(err){$('videoStatus').textContent='Dit is geen geldige URL.';$('videoStatus').className='status warn';return}
+ const item={kind:'url',name,url:raw};const wasEmpty=!clips.length;clips.push(item);renderClips(clips.length-1);loadClip(clips.length-1);
+ input.value='';$('videoStatus').textContent='URL geladen: '+name;$('videoStatus').className='status good';}
+$('addVideoUrl').addEventListener('click',addVideoUrlClip);
+$('videoUrl').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addVideoUrlClip();}});
+videoSelect.addEventListener('change',()=>loadClip(Number(videoSelect.value)));
+video.addEventListener('error',()=>{const c=clips[Number(videoSelect.value)];if(!c||c.kind!=='url')return;
+ $('videoStatus').textContent='Deze URL kan de browser niet als video laden. Gebruik een directe link naar een bestand (bijv. .mp4 of .webm) die zonder login bereikbaar is. Een YouTube- of Vimeo-pagina werkt niet.';$('videoStatus').className='status warn';});
 
 
 
@@ -95,7 +114,7 @@ $('autoSpeed').onchange=()=>{if($('autoSpeed').checked)applyLiveSpeed();else $('
 $('videoBpm').oninput=calcSpeed;$('targetBpm').oninput=calcSpeed;
 $('useDetected').onclick=()=>{const bpm=Number($('detected').textContent);if(bpm>0){$('targetBpm').value=bpm;calcSpeed()}else{$('syncStatus').textContent='Nog geen betrouwbaar BPM-tempo gemeten.'}};
 $('play').onclick=()=>video.play().catch(()=>{});$('pause').onclick=()=>video.pause();$('zero').onclick=()=>{video.currentTime=0};
-$('videoLoop').addEventListener('change',()=>{video.loop=$('videoLoop').checked;$('videoStatus').textContent=(videoFiles[Number(videoSelect.value)]?.name||'Video')+($('videoLoop').checked?' · loop ingeschakeld':' · loop uitgeschakeld');$('videoStatus').className='status '+($('videoLoop').checked?'good':'');});
+$('videoLoop').addEventListener('change',()=>{video.loop=$('videoLoop').checked;const c=clips[Number(videoSelect.value)];$('videoStatus').textContent=(c?.name||'Video')+($('videoLoop').checked?' · loop ingeschakeld':' · loop uitgeschakeld');$('videoStatus').className='status '+($('videoLoop').checked?'good':'');});
 video.loop=$('videoLoop').checked;
 $('sync').onclick=()=>{const off=Number($('offset').value||0)/1000;video.currentTime=Math.max(0,video.currentTime+off);video.play().catch(()=>{});$('syncStatus').textContent='Video gestart met offset '+off.toFixed(3)+' s. Audio in het andere tabblad blijft door de browser bestuurd.';$('syncStatus').className='status good';};
 $('reset').onclick=()=>{$('videoBpm').value=120;$('targetBpm').value=120;$('offset').value=0;video.playbackRate=1;calcSpeed();$('syncStatus').textContent='Instellingen teruggezet.'};

@@ -16,10 +16,10 @@
 #descentWrap.fs #descentFsExit,#descentWrap:fullscreen #descentFsExit{display:block!important}
 
 /* --- rustiger videopaneel --- */
-#panelVideo .panel-head{display:flex;align-items:baseline;justify-content:space-between;gap:14px;margin-bottom:14px}
-#panelVideo h2{margin:0;font-size:17px;font-weight:600;letter-spacing:-.2px}
-#panelVideo h2 span{color:#7d8bad;font-weight:600;margin-right:9px;font-variant-numeric:tabular-nums}
-#panelVideo .meta{color:#8492b1;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:50%}
+.panel-head{display:flex;align-items:baseline;justify-content:space-between;gap:14px;margin-bottom:14px}
+.panel-head h2{margin:0;font-size:17px;font-weight:600;letter-spacing:-.2px}
+.panel-head h2 span{color:#7d8bad;font-weight:600;margin-right:9px;font-variant-numeric:tabular-nums}
+.panel-head .meta{color:#8492b1;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:50%}
 #panelVideo .picker{display:flex;gap:8px;align-items:center;margin-bottom:12px}
 #panelVideo .picker select{flex:1;min-width:0;background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.10);padding:9px 10px;font-size:14px;border-radius:10px}
 .filebtn{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;margin:0;padding:9px 13px;border:1px solid rgba(255,255,255,.13);border-radius:10px;color:#e8eefc;font-size:13.5px;font-weight:600;cursor:pointer;background:rgba(255,255,255,.04);transition:background .15s}
@@ -47,6 +47,19 @@ details.more select{width:100%;background:rgba(255,255,255,.03);border-color:rgb
 #panelVideo .status.good{color:#b6c8e6}
 #panelVideo .foot{margin:7px 0 0;font-size:11.5px;color:#6e7b98}
 #panelVideo .foot strong{color:#93a2c0;font-weight:600}
+
+/* --- rustiger audiobron --- */
+.drop{border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:12px;margin-bottom:10px;background:rgba(255,255,255,.02);text-align:left}
+.drop label{margin:0 0 6px;font-size:12.5px;color:#a3b1cd}
+.drop .filebtn{margin:0 0 4px}
+#panelAudio select,#panelAudio input[type=url]{width:100%;background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.10);border-radius:10px;padding:9px 10px;font-size:14px}
+#panelAudio label[for=audioSource]{margin:2px 0 6px;font-size:12.5px;color:#a3b1cd}
+#panelAudio .hint{font-size:12.5px;color:#8795b3;margin:6px 0 0}
+#panelAudio .actions{margin:10px 0 0;gap:6px}
+#panelAudio .actions button.secondary{background:transparent;border:1px solid rgba(255,255,255,.13);font-weight:600;font-size:13px;padding:9px 12px}
+#panelAudio .status{margin-top:12px;font-size:12.5px}
+#panelAudio .note{background:rgba(54,169,225,.07);border-left:2px solid rgba(54,169,225,.55);color:#a9b8d4;font-size:12px;padding:9px 11px;margin-top:12px}
+#panelAudio .metric em{display:block;margin-top:3px}
 </style>
 </head>
 <body><main>
@@ -96,14 +109,14 @@ details.more select{width:100%;background:rgba(255,255,255,.03);border-color:rgb
 <div class="status" id="videoStatus">Kies eerst een video.</div>
 <p class="foot"><strong>nep-beatclip.mp4</strong> staat al klaar · alles blijft op je apparaat</p>
 </section>
-<section class="panel">
-<h2>02 · Audiobron</h2>
-<p class="hint">Selecteer één bron. De meters en BPM-analyse volgen de actieve bron.</p>
-<label for="audioSource">Kies audiobron</label><select id="audioSource" style="width:100%;background:#0a101a;color:white;border:1px solid #354259;border-radius:9px;padding:12px;font-size:15px"><option value="local">Lokaal audiobestand</option><option value="url">Directe audio-URL</option><option value="embedded">Ingebouwde browser / radio</option><option value="tab">Ander browsertabblad</option></select>
-<div class="audio-mode" data-mode="local"><div class="drop"><label for="audioFile">Open lokaal audiobestand</label><input id="audioFile" type="file" accept="audio/*"><audio id="audioPlayer" controls style="display:none;width:100%;margin-top:10px"></audio></div></div>
-<div class="audio-mode" data-mode="url" hidden><div class="drop"><label for="audioUrl">Directe audio-URL</label><input id="audioUrl" type="url" placeholder="https://…/muziek.mp3" style="width:100%;background:#0c1426;color:white;border:1px solid #354563;border-radius:8px;padding:10px"><button id="loadAudioUrl" class="secondary" style="margin-top:8px">Open audio-URL</button></div></div>
-<div class="audio-mode" data-mode="embedded" hidden><div class="drop"><label for="stationSelect">Voorkeuze radiowebsites</label><select id="stationSelect" style="width:100%;background:#0c1426;color:white;border:1px solid #354563;border-radius:8px;padding:10px"><option value="">Kies een radiowebsite…</option><option value="https://www.radiozenders.fm/">radiozenders.fm</option><option value="https://www.nederland.fm/">nederland.fm</option></select><button id="openStation" class="secondary" style="margin-top:8px">Open geselecteerde radio in ingebouwde browser</button></div>
-<div class="drop"><label for="siteUrl">Of open een andere website in de ingebouwde browser</label><input id="siteUrl" type="url" placeholder="https://…" style="width:100%;background:#0c1426;color:white;border:1px solid #354563;border-radius:8px;padding:10px"><button id="openSite" class="secondary" style="margin-top:8px">Open website</button><iframe id="siteFrame" title="Ingebouwde browser voor muziekwebsite" style="display:none;width:100%;height:420px;border:1px solid #405174;border-radius:10px;margin-top:10px" allow="autoplay; encrypted-media; fullscreen; picture-in-picture"></iframe></div>
+<section class="panel" id="panelAudio">
+<header class="panel-head"><h2><span>02</span>Audiobron</h2><div class="meta" id="audioMeta"></div></header>
+<p class="hint">Kies één bron; meters en BPM-analyse volgen die bron.</p>
+<label for="audioSource">Audiobron</label><select id="audioSource"><option value="local">Lokaal audiobestand</option><option value="url">Directe audio-URL</option><option value="embedded">Ingebouwde browser / radio</option><option value="tab">Ander browsertabblad</option></select>
+<div class="audio-mode" data-mode="local"><div class="drop"><label class="filebtn" for="audioFile"><span aria-hidden="true">+</span> Audiobestand<input id="audioFile" type="file" accept="audio/*"></label><audio id="audioPlayer" controls style="display:none;width:100%;margin-top:10px"></audio></div></div>
+<div class="audio-mode" data-mode="url" hidden><div class="drop"><label for="audioUrl">Directe audio-URL</label><input id="audioUrl" type="url" placeholder="https://…/muziek.mp3"><button id="loadAudioUrl" class="secondary" style="margin-top:8px">Open audio-URL</button></div></div>
+<div class="audio-mode" data-mode="embedded" hidden><div class="drop"><label for="stationSelect">Voorkeuze radiowebsites</label><select id="stationSelect"><option value="">Kies een radiowebsite…</option><option value="https://www.radiozenders.fm/">radiozenders.fm</option><option value="https://www.nederland.fm/">nederland.fm</option></select><button id="openStation" class="secondary" style="margin-top:8px">Open geselecteerde radio in ingebouwde browser</button></div>
+<div class="drop"><label for="siteUrl">Of open een andere website in de ingebouwde browser</label><input id="siteUrl" type="url" placeholder="https://…"><button id="openSite" class="secondary" style="margin-top:8px">Open website</button><iframe id="siteFrame" title="Ingebouwde browser voor muziekwebsite" style="display:none;width:100%;height:420px;border:1px solid #405174;border-radius:10px;margin-top:10px" allow="autoplay; encrypted-media; fullscreen; picture-in-picture"></iframe></div>
 <p class="hint">Start de radio in de ingebouwde browser en klik daarna op ‘Koppel ingebouwde audio’. Kies in de browserdialoog dit tabblad en schakel audio delen in. Insluiten kan door radiowebsites worden geblokkeerd; gebruik dan ‘Open website in nieuw tabblad’ en kies in de dropdown ‘Ander browsertabblad’.</p><div class="actions"><button id="openExternal" class="secondary">Open website in nieuw tabblad</button><button id="connectEmbedded" class="secondary">♫ Koppel ingebouwde audio</button></div></div>
 <div class="audio-mode" data-mode="tab" hidden><p class="hint">Deel een tabblad waarop audio speelt. Kies in het browservenster het juiste tabblad en vink audio delen aan.</p><button id="connect">♫ Selecteer browsertabblad</button></div>
 <div class="actions"><button id="disconnect" class="secondary" disabled>Verbreken</button></div>
@@ -145,7 +158,7 @@ details.more select{width:100%;background:rgba(255,255,255,.03);border-color:rgb
 const $=id=>document.getElementById(id);
 const video=$('video'); let videoUrl=null, stream=null, audioCtx=null, analyser=null, source=null, raf=null, peaks=[], lastBeat=0, tapTimes=[], clips=[], audioUrl=null;
 const BUNDLED_CLIPS=[{name:'nep-beatclip.mp4',url:'media/nep-beatclip.mp4'}];
-const audioSourceSelect=$('audioSource');function setAudioMode(){document.querySelectorAll('.audio-mode').forEach(el=>{el.hidden=el.dataset.mode!==audioSourceSelect.value})}audioSourceSelect.addEventListener('change',setAudioMode);setAudioMode();
+const audioSourceSelect=$('audioSource');function setAudioMode(){const am=$('audioMeta');if(am)am.textContent=audioSourceSelect.selectedOptions[0]?.textContent||'';document.querySelectorAll('.audio-mode').forEach(el=>{el.hidden=el.dataset.mode!==audioSourceSelect.value})}audioSourceSelect.addEventListener('change',setAudioMode);setAudioMode();
 const videoFile=$('videoFile'), videoSelect=$('videoSelect'), videoHost=$('videoHost');
 function renderClips(activeIndex){videoSelect.innerHTML='';clips.forEach((c,i)=>{const o=document.createElement('option');o.value=i;o.textContent=c.name+(c.kind==='bundled'?' · meegeleverd':c.kind==='url'?' · URL':'');o.selected=(i===activeIndex);videoSelect.appendChild(o)});videoSelect.disabled=!clips.length;const m=$('clipMeta');if(m)m.textContent=clips.length+(clips.length===1?' clip':' clips');}
 function loadClip(i){const c=clips[i];if(!c)return;if(typeof showVideo==='function')showVideo();if(videoUrl){URL.revokeObjectURL(videoUrl);videoUrl=null;}

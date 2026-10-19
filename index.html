@@ -9,6 +9,11 @@
 /* BeatSync Studio finished UI refresh */
 :root{color-scheme:dark;--bg:#081334;--panel:#101f49;--line:#2a3c70;--muted:#aab9d8;--accent:#ffc629;--blue:#36a9e1;--glow:rgba(54,169,225,.13)}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse 75% 35% at 50% -10%,#263b76 0%,transparent 72%),var(--bg);color:#f3f5f8;font:15px/1.55 Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;letter-spacing:.12px}main{max-width:1180px;margin:auto;padding:38px 22px 70px}.top{padding:10px 0 28px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:22px}h1{font-size:clamp(34px,6vw,56px);font-weight:650;letter-spacing:-2.4px;margin:0;line-height:1.05}h1 span{color:#fff}.brand-mark{display:inline-flex;align-items:center;gap:10px;margin-bottom:10px;color:#f7f8ff;font-size:14px;font-weight:800;letter-spacing:1.1px}.brand-n{font-size:26px;font-weight:950;line-height:1;background:linear-gradient(135deg,#36a9e1 0 32%,#ffc629 32% 66%,#ef4444 66%);background-clip:text;color:transparent}.nep-logo{height:38px;width:auto;max-width:190px;object-fit:contain}.country-tag{font-size:10px;font-weight:700;color:#aab9d8;letter-spacing:1.8px;border-left:1px solid #53638a;padding-left:12px}.sub{color:#aeb8c8;max-width:680px;font-size:16px;margin:12px 0 0}.pill{border:1px solid #3c5133;color:var(--accent);background:var(--glow);padding:8px 13px;border-radius:99px;font-size:11px;font-weight:700;letter-spacing:.7px}.grid{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}.panel{background:linear-gradient(155deg,rgba(19,27,41,.98),rgba(13,18,29,.98));border:1px solid var(--line);border-radius:18px;padding:20px;min-width:0;box-shadow:0 18px 50px rgba(0,0,0,.13)}h2{font-size:16px;letter-spacing:.1px;margin:0 0 12px;font-weight:650}.hint{color:var(--muted);font-size:13px;margin:7px 0 13px}.drop{border:1px dashed #47556b;border-radius:13px;padding:14px;text-align:left;margin-bottom:12px;background:rgba(4,8,14,.2)}input[type=file]{max-width:100%;color:var(--muted)}video{width:100%;max-height:420px;background:#05070c;border-radius:13px;display:block}button{background:var(--accent);border:0;color:#11180a;font-weight:750;border-radius:10px;padding:11px 15px;cursor:pointer;transition:transform .15s,filter .15s}button:hover{filter:brightness(1.07);transform:translateY(-1px)}button.secondary{background:#202a3a;color:#f1f5ff;border:1px solid #354259}button:disabled{opacity:.45;cursor:not-allowed;transform:none}.actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.status{font-size:13px;color:var(--muted);min-height:22px}.status.good{color:var(--accent)}.status.warn{color:#ffd18a}label{display:block;font-size:13px;color:#c2ccda;margin:12px 0 5px}input[type=number],input[type=range]{width:100%}input[type=number],input[type=url],select{background:#0a101a;color:white;border:1px solid #354259;border-radius:9px;padding:10px;font-size:15px}input:focus,select:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}.metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}.metric{background:#0a1019;border:1px solid #253044;border-radius:12px;padding:12px}.metric small{display:block;color:var(--muted)}.metric strong{font-size:27px;letter-spacing:-.8px}.metric em{font-size:12px;color:var(--muted);font-style:normal}.bar{height:5px;background:#273247;border-radius:9px;overflow:hidden;margin:12px 0}.bar div{height:100%;width:0;background:var(--accent);transition:width .1s}.note{background:#121d2d;border-left:3px solid var(--blue);padding:10px 12px;border-radius:5px;color:#c5d0e7;font-size:13px;margin-top:14px}.full{grid-column:1/-1}.visuals{display:grid;grid-template-columns:.7fr 1.3fr;gap:16px}.vizbox{background:#0a1019;border:1px solid #253044;border-radius:13px;padding:14px;min-width:0}.viztitle{display:flex;justify-content:space-between;gap:8px;align-items:center;color:#c5d0e7;font-size:13px;margin-bottom:8px}.vu-track{height:22px;background:#172235;border-radius:6px;overflow:hidden;border:1px solid #2b3b59;margin:8px 0}.vu-fill{height:100%;width:0%;background:linear-gradient(90deg,#56e39f 0%,#d7e85c 68%,#ff786f 92%);transition:width .06s linear}.vu-scale{display:flex;justify-content:space-between;color:#7585a5;font-size:11px}.eqcanvas{display:block;width:100%;height:170px;background:#080e1b;border-radius:8px}.footer{color:#7585a5;font-size:12px;margin-top:22px;padding-top:16px;border-top:1px solid rgba(255,255,255,.07)}iframe{background:#0b1019}@media(max-width:760px){main{padding:22px 14px 48px}.grid{grid-template-columns:1fr}.full{grid-column:auto}.visuals{grid-template-columns:1fr}.top{align-items:flex-start}.panel{padding:16px}}
+#descentWrap{position:relative}
+#descentWrap.fs{position:fixed;inset:0;z-index:9999;background:#000;padding:0;margin:0}
+#descentWrap:fullscreen{background:#000}
+#descentWrap.fs iframe,#descentWrap:fullscreen iframe{position:absolute;inset:0;width:100%!important;height:100%!important;border:0!important;border-radius:0!important}
+#descentWrap.fs #descentFsExit,#descentWrap:fullscreen #descentFsExit{display:block!important}
 </style>
 </head>
 <body><main>
@@ -31,8 +36,8 @@
 <option value="https://descent.live/skyradionl">Sky Radio</option>
 <option value="https://descent.live/veronicanl">Radio Veronica</option>
 <option value="https://descent.live/slam_nl">SLAM!</option>
-<option value="https://descent.live/nporadio2senj">NPO Radio 2 Soul &amp; Jazz</option></select><button id="backToVideo" class="secondary" style="margin-top:8px" hidden>← Terug naar de video</button><p class="hint" style="margin:8px 0 0">Deze 11 pagina's van descent.live tonen wat de zender nu speelt (artiest en titel via Last.fm). Het is een weergave, geen videobestand: je video blijft gewoon in de lijst staan en komt terug met ‘Terug naar de video’.</p></div>
-<iframe id="descentFrame" title="Descent now playing" hidden style="width:100%;height:420px;border:1px solid #405174;border-radius:12px;background:#05070c" allow="autoplay; encrypted-media; fullscreen"></iframe>
+<option value="https://descent.live/nporadio2senj">NPO Radio 2 Soul &amp; Jazz</option></select><div class="actions" style="margin-top:8px;gap:8px"><button id="backToVideo" class="secondary" hidden>← Terug naar de video</button><button id="descentFs" class="secondary" hidden>⛶ Fullscreen</button></div><p class="hint" style="margin:8px 0 0">Deze 11 pagina's van descent.live tonen wat de zender nu speelt (artiest en titel via Last.fm). Het is een weergave, geen videobestand: je video blijft gewoon in de lijst staan en komt terug met ‘Terug naar de video’.</p></div>
+<div id="descentWrap" hidden><button id="descentFsExit" class="secondary" style="display:none;position:absolute;top:12px;right:12px;z-index:2;background:#0c1426ee;border:1px solid #405174;border-radius:8px;padding:8px 12px;color:#fff;cursor:pointer">✕ Sluiten (Esc)</button><iframe id="descentFrame" title="Descent now playing" style="display:block;width:100%;height:420px;border:1px solid #405174;border-radius:12px;background:#05070c" allow="autoplay; encrypted-media; fullscreen; picture-in-picture"></iframe></div>
 <div id="videoHost"><video id="video" controls playsinline></video></div>
 <div class="actions"><button id="play">▶ Video afspelen</button><button id="pause" class="secondary">Ⅱ Pauzeren</button><button id="zero" class="secondary">↺ Terug naar begin</button></div>
 <label style="display:flex;align-items:center;gap:9px;margin-top:14px;font-weight:500"><input id="videoLoop" type="checkbox" style="width:auto;min-height:0"> Video automatisch herhalen (loop)</label>
@@ -109,14 +114,32 @@ function addVideoUrlClip(){const input=$('videoUrl');let raw=(input.value||'').t
 $('addVideoUrl').addEventListener('click',addVideoUrlClip);
 $('videoUrl').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addVideoUrlClip();}});
 videoSelect.addEventListener('change',()=>loadClip(Number(videoSelect.value)));
-const descentSelect=$('descentSelect'), descentFrame=$('descentFrame');
-function showVideo(){descentFrame.hidden=true;descentFrame.removeAttribute('src');videoHost.hidden=false;$('backToVideo').hidden=true;descentSelect.value='';
+const descentSelect=$('descentSelect'), descentFrame=$('descentFrame'), descentWrap=$('descentWrap'), descentFs=$('descentFs');
+const FS_LABEL_ON='⤢ Fullscreen sluiten (Esc)', FS_LABEL_OFF='⛶ Fullscreen';
+function descentFsActive(){return document.fullscreenElement===descentWrap||descentWrap.classList.contains('fs')}
+function updateFsLabel(){if(descentFs)descentFs.textContent=descentFsActive()?FS_LABEL_ON:FS_LABEL_OFF}
+async function toggleDescentFs(){
+  if(!descentWrap||descentWrap.hidden)return;
+  if(descentFsActive()){
+    if(document.fullscreenElement){try{await document.exitFullscreen()}catch(e){}}
+    descentWrap.classList.remove('fs');
+  }else{
+    try{await descentWrap.requestFullscreen()}catch(e){descentWrap.classList.add('fs')}
+  }
+  updateFsLabel();
+}
+if(descentFs)descentFs.onclick=toggleDescentFs;
+const descentFsExit=$('descentFsExit');
+if(descentFsExit)descentFsExit.onclick=()=>{if(descentFsActive())toggleDescentFs()};
+document.addEventListener('fullscreenchange',updateFsLabel);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&descentWrap.classList.contains('fs')){descentWrap.classList.remove('fs');updateFsLabel()}});
+function showVideo(){if(document.fullscreenElement===descentWrap){document.exitFullscreen().catch(()=>{})}descentWrap.classList.remove('fs');descentWrap.hidden=true;descentFrame.hidden=true;descentFrame.removeAttribute('src');videoHost.hidden=false;$('backToVideo').hidden=true;if(descentFs)descentFs.hidden=true;descentSelect.value='';
  const c=clips[Number(videoSelect.value)];
  $('videoStatus').textContent=c?('Video-weergave: '+c.name):'Kies een video of plak een URL.';
  $('videoStatus').className='status good';}
 descentSelect.addEventListener('change',()=>{const u=descentSelect.value;
  if(!u){showVideo();return}
- descentFrame.src=u;descentFrame.hidden=false;videoHost.hidden=true;$('backToVideo').hidden=false;
+ descentFrame.src=u;descentWrap.hidden=false;descentFrame.hidden=false;videoHost.hidden=true;$('backToVideo').hidden=false;descentFs.hidden=false;updateFsLabel();
  $('videoStatus').textContent='Descent-weergave: '+descentSelect.selectedOptions[0].textContent+' · now playing (geen video). Staat er “Nothing in the air”, dan scrobbelt die zender nu niet.';
  $('videoStatus').className='status good';});
 $('backToVideo').onclick=showVideo;

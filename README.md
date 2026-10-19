@@ -37,7 +37,7 @@ offset in milliseconden om het beeld precies op de tel te leggen.
 ## Functies
 
 - **Video's**: meerdere lokale bestanden kiezen, een video-URL plakken, of de meegeleverde clip gebruiken — alles in één keuzelijst.
-- **Descent-weergave als beeld**: 11 now-playing-pagina's (Qmusic, KINK, KINK Distortion, JOE, Music Starts Here, NPO Radio 2, Radio 10, Sky Radio, Veronica, SLAM!, NPO Radio 2 Soul & Jazz) openen in het videopaneel, met één klik terug naar je video.
+- **Descent-weergave als beeld**: 11 now-playing-pagina's (Qmusic, KINK, KINK Distortion, JOE, Music Starts Here, NPO Radio 2, Radio 10, Sky Radio, Veronica, SLAM!, NPO Radio 2 Soul & Jazz) openen in het videopaneel, met **fullscreen** (knop, of Esc om te sluiten) en één klik terug naar je video.
 - **Audiobron** via een dropdown:
   - lokaal audiobestand
   - directe audio-URL

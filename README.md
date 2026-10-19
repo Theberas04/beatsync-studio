@@ -8,6 +8,7 @@ Alles draait lokaal in je browser: er worden geen bestanden geüpload.
 ## Functies
 
 - Meerdere lokale video's kiezen **of een video-URL plakken**; alles komt in één keuzelijst terecht.
+- Een meegeleverde clip (`media/nep-beatclip.mp4`) staat standaard klaar.
 - Audiobron kiezen via een dropdown:
   - lokaal audiobestand
   - directe audio-URL
@@ -27,6 +28,12 @@ Alles draait lokaal in je browser: er worden geen bestanden geüpload.
 
 Voor het delen van tabblad- of schermaudio moet je in de browserdialoog het juiste
 tabblad kiezen en **audio delen** aanvinken. Werkt het beste in Chrome of Edge.
+
+### Meegeleverde clip
+
+`media/nep-beatclip.mp4` hoort bij de site en staat bij het openen al in de keuzelijst (label 🎬).
+Op de container moet hij in `/var/www/beatsync/media/` staan; `update-from-github.sh` zet hem daar
+samen met `index.html` neer.
 
 ### Video via een URL
 

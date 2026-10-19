@@ -10,6 +10,8 @@ CTID="${1:-${CTID:-}}"
 SITE_DIR="/var/www/beatsync"
 REPO="Theberas04/beatsync-studio"
 RAW_BASE="https://raw.githubusercontent.com/${REPO}/main"
+# Cache-buster: raw.githubusercontent serveert anders tot ~5 min een oude versie.
+CB="cb=$(date +%s)"
 TMP="$(mktemp)"
 trap 'rm -f "$TMP"' EXIT
 
@@ -26,7 +28,7 @@ pct status "$CTID" >/dev/null 2>&1 || { bad "Container $CTID bestaat niet."; exi
 
 # ---------------------------------------------------------------- index.html
 log "Nieuwste index.html ophalen…"
-if ! curl -fsSL --max-time 30 "$RAW_BASE/index.html" -o "$TMP"; then
+if ! curl -fsSL --max-time 30 "$RAW_BASE/index.html?$CB" -o "$TMP"; then
   bad "Kon $RAW_BASE/index.html niet ophalen."
   exit 1
 fi
@@ -82,7 +84,7 @@ MEDIA_FAIL=0
 for name in $MEDIA_LIST; do
   case "$name" in */*|.*) warn "Onverwachte naam overgeslagen: $name"; continue ;; esac
   MT="$(mktemp)"
-  if ! curl -fsSL --max-time 180 "$RAW_BASE/media/$name" -o "$MT"; then
+  if ! curl -fsSL --max-time 180 "$RAW_BASE/media/$name?$CB" -o "$MT"; then
     bad "Kon media/$name niet ophalen."
     MEDIA_FAIL=1
     rm -f "$MT"

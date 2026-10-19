@@ -89,6 +89,8 @@ leest de analyser rechtstreeks mee. Dat blijft werken als de app naar de achterg
 juist omdat het meelezen in het zichtbare tabblad gebeurt. Sluit je het app-tabblad, dan
 meldt het venster dat de verbinding weg is.
 
+![Los meters-venster](docs/screenshots/meters-tab.jpg)
+
 ### Meegeleverde clip
 
 `media/nep-beatclip.mp4` hoort bij de site en staat bij het openen al in de keuzelijst

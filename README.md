@@ -63,6 +63,7 @@ video** zet je eigen video weer neer.
 - **Live spectrum-analyzer** (EQ-weergave).
 - **BPM-schatting** met adaptieve beat-detectie, plus tap-tempo.
 - **Tempo-correctie**: videosnelheid op basis van BPM, met timing-offset en automatische modus.
+- **Videogeluid staat uit**: de video speelt altijd gedempt, dus je hoort alleen de gekozen audiobron en de BPM-analyse meet nooit het beeld zelf.
 
 ## Gebruik
 

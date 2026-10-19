@@ -109,7 +109,7 @@ select option:checked,select option:focus{background-color:#20305a;color:#fff}
 <div class="stage">
 <div id="videoEmpty" class="video-empty"><strong>Nog geen video</strong><span>Voeg een bestand toe met <em>+ Bestanden</em>, of plak een directe video-URL onder <em>Meer opties</em>.</span></div>
 <div id="descentWrap" hidden><button id="descentFsExit" class="secondary" style="display:none;position:absolute;top:12px;right:12px;z-index:2;background:#0c1426ee;border:1px solid #405174;border-radius:8px;padding:8px 12px;color:#fff;cursor:pointer">✕ Sluiten (Esc)</button><iframe id="descentFrame" title="Descent now playing" style="display:block;width:100%;height:420px;border:1px solid #405174;border-radius:12px;background:#05070c" allow="autoplay; encrypted-media; fullscreen; picture-in-picture"></iframe></div>
-<div id="videoHost"><video id="video" controls playsinline></video></div>
+<div id="videoHost"><video id="video" controls playsinline muted></video></div>
 </div>
 
 <div class="controls">
@@ -142,7 +142,7 @@ select option:checked,select option:focus{background-color:#20305a;color:#fff}
 </details>
 
 <div class="status" id="videoStatus">Nog geen video gekozen.</div>
-<p class="foot"><strong>nep-beatclip.mp4</strong> staat al klaar · je eigen video blijft op je apparaat</p>
+<p class="foot"><strong>nep-beatclip.mp4</strong> staat al klaar · videogeluid staat uit, de app volgt alleen je audiobron</p>
 </section>
 <section class="panel" id="panelAudio">
 <header class="panel-head"><h2><span>02</span>Audiobron</h2><div class="meta" id="audioMeta"></div></header>
@@ -198,7 +198,7 @@ function renderClips(activeIndex){videoSelect.innerHTML='';clips.forEach((c,i)=>
 function updateVideoEmpty(){const e=$('videoEmpty');if(!e)return;const w=document.getElementById('descentWrap');const leeg=!clips.length&&(!w||w.hidden);e.hidden=!leeg;videoHost.hidden=leeg;['play','pause','zero'].forEach(id=>{const b=$(id);if(b&&!b.hidden)b.disabled=!clips.length});}
 function loadClip(i){const c=clips[i];if(!c)return;if(typeof showVideo==='function')showVideo();if(videoUrl){URL.revokeObjectURL(videoUrl);videoUrl=null;}
  if(c.kind==='file'){videoUrl=URL.createObjectURL(c.file);video.src=videoUrl;}else{video.src=c.url;}
- videoHost.innerHTML='';videoHost.appendChild(video);video.load();video.loop=$('videoLoop').checked;
+ videoHost.innerHTML='';videoHost.appendChild(video);video.muted=true;video.volume=0;video.load();video.loop=$('videoLoop').checked;
  $('videoStatus').textContent=c.name+' ('+(Number(i)+1)+'/'+clips.length+')'+(c.kind==='url'?' · via URL':c.kind==='bundled'?' · meegeleverd':'');$('videoStatus').className='status good';}
 videoFile.addEventListener('change',e=>{const picked=Array.from(e.target.files||[]).map(f=>({kind:'file',name:f.name,file:f}));
  if(!picked.length)return;
@@ -273,7 +273,9 @@ $('videoBpm').oninput=calcSpeed;$('targetBpm').oninput=calcSpeed;
 $('useDetected').onclick=()=>{const bpm=Number($('detected').textContent);if(bpm>0){$('targetBpm').value=bpm;calcSpeed()}else{$('syncStatus').textContent='Nog geen betrouwbaar BPM-tempo gemeten.'}};
 $('play').onclick=()=>video.play().catch(()=>{});$('pause').onclick=()=>video.pause();$('zero').onclick=()=>{video.currentTime=0};
 $('videoLoop').addEventListener('change',()=>{video.loop=$('videoLoop').checked;const c=clips[Number(videoSelect.value)];$('videoStatus').textContent=(c?.name||'Video')+($('videoLoop').checked?' · loop ingeschakeld':' · loop uitgeschakeld');$('videoStatus').className='status '+($('videoLoop').checked?'good':'');});
-video.loop=$('videoLoop').checked;
+video.loop=$('videoLoop').checked;video.muted=true;video.volume=0;
+// videogeluid staat bewust uit: de app volgt alleen de gekozen audiobron
+video.addEventListener('volumechange',()=>{if(video.muted&&video.volume===0)return;video.muted=true;video.volume=0});
 $('sync').onclick=()=>{const off=Number($('offset').value||0)/1000;video.currentTime=Math.max(0,video.currentTime+off);video.play().catch(()=>{});$('syncStatus').textContent='Video gestart met offset '+off.toFixed(3)+' s. Audio in het andere tabblad blijft door de browser bestuurd.';$('syncStatus').className='status good';};
 BUNDLED_CLIPS.forEach(c=>clips.push({kind:'bundled',name:c.name,url:c.url}));
 if(clips.length){renderClips(0);loadClip(0);$('videoStatus').textContent='Meegeleverde clip klaargezet. Kies een bestand of plak een URL voor iets anders.';$('videoStatus').className='status good';}

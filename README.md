@@ -59,9 +59,9 @@ video** zet je eigen video weer neer.
   - directe audio-URL
   - ingebouwde browser met radiowebsites (o.a. radiozenders.fm en nederland.fm)
   - audio van een ander browsertabblad delen
-- **Live VU-meter** met piek- en RMS-waarde in dBFS.
-- **Live spectrum-analyzer** (EQ-weergave).
-- **BPM-schatting** met adaptieve beat-detectie, plus tap-tempo.
+- **Live VU-meter** met piek- en RMS-waarde in dBFS, plus momentary- en short-term-loudness (lokale LUFS-benadering; indicatief).
+- **Live spectrum-analyzer** (EQ-weergave) en spectrogram dat frequentie-inhoud over tijd toont.
+- **BPM-schatting** met adaptieve beat-detectie, plus tap-tempo, tempoverloop, drift t.o.v. starttempo en melding van aanhoudende tempowissels.
 - **Tempo-correctie**: videosnelheid op basis van BPM, met timing-offset en automatische modus.
 - **Videogeluid staat uit**: de video speelt altijd gedempt, dus je hoort alleen de gekozen audiobron en de BPM-analyse meet nooit het beeld zelf.
 - **Los meters-venster**: met **⧉ Eigen tabblad** zet je de VU-meters, de EQ en de BPM in een eigen tabblad naast de app — handig als je de video groot wilt houden.

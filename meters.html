@@ -69,14 +69,23 @@ canvas{width:100%;height:210px;display:block;border-radius:10px;border:1px solid
    <div class="scale"><span>20 Hz</span><span>Bas</span><span>Midden</span><span>Hoge tonen</span><span>20 kHz</span></div>
   </div>
  </div>
+ <div class="metrics" style="grid-template-columns:repeat(auto-fit,minmax(145px,1fr))">
+  <div class="metric"><small>Loudness · momentary</small><strong id="loudMoment">—</strong><em>LUFS · benadering</em></div>
+  <div class="metric"><small>Loudness · short-term</small><strong id="loudShort">—</strong><em>LUFS · 3 seconden</em></div>
+  <div class="metric"><small>Tempo-drift</small><strong id="driftReadout">—</strong><em id="driftRange">tegenover starttempo</em></div>
+  <div class="metric"><small>Tempowissels</small><strong id="tempoChanges">0</strong><em id="tempoAlert">geen afwijking</em></div>
+ </div>
+ <p class="hint">LUFS is hier een lokale RMS-benadering, niet een gecertificeerde EBU R128-meter. Waarden zijn indicatief.</p>
 </div>
+<div class="panel"><div class="vt"><b>Tempoverloop</b><span>laatste 2 minuten</span></div><canvas id="driftCanvas" style="height:120px"></canvas></div>
+<div class="panel"><div class="vt"><b>Spectrogram · frequentie over tijd</b><span>links = eerder · rechts = nu · circa 12 s zichtbaar</span></div><canvas id="spectrogram" style="height:180px"></canvas><div class="scale"><span>laag</span><span>midden</span><span>hoog</span><span>frequentie →</span></div></div>
 
-<p class="hint">Dit venster toont alleen mee: het geluid en de video blijven in het tabblad van BeatSync Studio zelf.
+<p class="hint">Tempoverloop bewaart maximaal twee minuten; tempowissels worden na bevestiging geteld. Loudness is indicatief (geen gecertificeerde EBU R128-meting). Dit venster toont alleen mee: het geluid en de video blijven in het tabblad van BeatSync Studio zelf.
  Open je dit venster los, gebruik dan de knop <b>⧉ Eigen tabblad</b> bij de meters in de app.</p>
 
 <script>
 const $=id=>document.getElementById(id);
-let M=null, host=null, peakHold=-60, ctx2=null, raf=null;
+let M=null, host=null, peakHold=-60, ctx2=null, raf=null, lastSpecAt=0;
 
 function connect(){
  try{
@@ -127,6 +136,20 @@ function drawEQ(analyser){
  }
 }
 
+function drawSpectrogram(analyser){
+ const now=performance.now();if(now-lastSpecAt<60)return;lastSpecAt=now;
+ const c=$('spectrogram'),r=c.getBoundingClientRect();if(!r.width)return;
+ const dpr=devicePixelRatio||1,w=Math.round(r.width*dpr),h=Math.round(r.height*dpr);if(c.width!==w||c.height!==h){c.width=w;c.height=h}
+ const x=c.getContext('2d');if(!x)return;const shift=Math.max(1,Math.round(6*dpr));if(w>shift){const old=x.getImageData(shift,0,w-shift,h);x.putImageData(old,0,0)}x.fillStyle='#080e1b';x.fillRect(w-shift,0,shift,h);
+ const bins=analyser.frequencyBinCount,f=new Uint8Array(bins);analyser.getByteFrequencyData(f);let sr=48000;try{sr=M.getAnalyser().context.sampleRate}catch(e){}
+ for(let y=0;y<h;y++){const ratio=1-y/h,hz=30*Math.pow(Math.min(18000,sr/2)/30,ratio),i=Math.min(bins-1,Math.floor(hz/(sr/2)*bins)),v=f[i]/255;x.fillStyle=`hsl(${215-v*185} 85% ${8+v*55}%)`;x.fillRect(w-shift,y,shift,1)}
+}
+function drawDrift(trace){
+ const c=$('driftCanvas'),r=c.getBoundingClientRect();if(!r.width)return;
+ const dpr=devicePixelRatio||1,w=Math.round(r.width*dpr),h=Math.round(r.height*dpr);if(c.width!==w||c.height!==h){c.width=w;c.height=h}
+ const x=c.getContext('2d');if(!x)return;x.fillStyle='#080e1b';x.fillRect(0,0,w,h);x.strokeStyle='#26334c';x.lineWidth=dpr;for(let i=1;i<4;i++){x.beginPath();x.moveTo(0,i*h/4);x.lineTo(w,i*h/4);x.stroke()}
+ if(!trace||trace.length<2)return;const t0=trace[0].t,t1=Math.max(t0+1,trace.at(-1).t),a=trace.map(p=>p.bpm),lo=Math.min(...a)-2,hi=Math.max(...a)+2;x.strokeStyle='#ffc629';x.lineWidth=2*dpr;x.beginPath();trace.forEach((p,i)=>{const px=(p.t-t0)/(t1-t0)*w,py=h-(p.bpm-lo)/(hi-lo)*h;i?x.lineTo(px,py):x.moveTo(px,py)});x.stroke();
+}
 function loop(){
  raf=requestAnimationFrame(loop);
  const analyser=M&&M.getAnalyser&&M.getAnalyser();
@@ -134,7 +157,7 @@ function loop(){
   $('eqStatus').textContent='Wacht op audio…';
   return;
  }
- const s=(M.state||{});
+ const s=(M.state||{}),a=M.getAnalytics?M.getAnalytics():{};
  $('bpm').textContent=s.bpm||'—';
  $('target').textContent=(s.target||'—')+' ';
  $('target').innerHTML=(s.target||'—')+'<em> BPM</em>';
@@ -142,9 +165,12 @@ function loop(){
  $('clip').textContent=s.clip||'geen clip';
  $('status').textContent=s.status||'';
  $('eqStatus').textContent='Live';
+ $('loudMoment').textContent=a.loudMoment||'—';$('loudShort').textContent=a.loudShort||'—';
+ $('driftReadout').textContent=a.drift||'—';$('tempoChanges').textContent=String(a.changes||0);$('tempoAlert').textContent=a.tempoChanges||'geen afwijking';
+ $('driftRange').textContent=a.baseBpm?'start '+a.baseBpm+' BPM · laatste 2 minuten':'wacht op BPM';
  const n=analyser.fftSize,data=new Float32Array(n);
  analyser.getFloatTimeDomainData(data);
- drawMeters(data);drawEQ(analyser);
+ drawMeters(data);drawEQ(analyser);drawSpectrogram(analyser);drawDrift(a.bpmTrace);
 }
 
 connect();

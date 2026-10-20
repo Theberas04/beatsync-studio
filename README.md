@@ -59,6 +59,7 @@ video** zet je eigen video weer neer.
   - directe audio-URL
   - ingebouwde browser met radiowebsites (o.a. radiozenders.fm en nederland.fm)
   - audio van een ander browsertabblad delen
+  - microfoon / audio-invoer (browser vraagt toestemming; apparaankeuze na toestemming)
 - **Live VU-meter** met piek- en RMS-waarde in dBFS, plus momentary- en short-term-loudness (lokale LUFS-benadering; indicatief).
 - **Live spectrum-analyzer** (EQ-weergave) en spectrogram dat frequentie-inhoud over tijd toont.
 - **BPM-schatting** met adaptieve beat-detectie, plus tap-tempo, tempoverloop, drift t.o.v. starttempo en melding van aanhoudende tempowissels.
@@ -76,7 +77,7 @@ video** zet je eigen video weer neer.
 Voor het delen van tabbladaudio kies je in de browserdialoog het tabblad waarop de muziek
 speelt en zet je **Tabblad-audio delen** aan. Dit BeatSync-tabblad wordt bewust niet
 aangeboden, zodat de app niet zijn eigen geluid gaat analyseren. Werkt het beste in Chrome
-of Edge.
+of Edge. Microfooninvoer vereist toestemming en een veilige context: HTTPS of localhost.
 
 ### Meters in een eigen tabblad
 

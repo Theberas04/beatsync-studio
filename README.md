@@ -10,6 +10,7 @@ HTML-bestand. Niets wordt geüpload: alles draait op het apparaat van de gebruik
 [![CI](https://github.com/Theberas04/beatsync-studio/actions/workflows/validate.yml/badge.svg)](https://github.com/Theberas04/beatsync-studio/actions/workflows/validate.yml)
 [![Live](https://img.shields.io/badge/live-theberas04.github.io%2Fbeatsync--studio-1f6feb)](https://theberas04.github.io/beatsync-studio/)
 [![Taal](https://img.shields.io/badge/interface-Nederlands-ffc629)](https://theberas04.github.io/beatsync-studio/)
+[![Licentie](https://img.shields.io/badge/licentie-MIT-2ea44f)](LICENSE)
 
 [**Open de live-versie →**](https://theberas04.github.io/beatsync-studio/)
 
@@ -166,8 +167,12 @@ deploy/proxmox/update-from-github.sh   site + media bijwerken in een bestaande c
 deploy/proxmox/check-tunnel.sh diagnose van de Cloudflare-route
 deploy/proxmox/fix-loop.sh     redirect-lus achter een tunnel repareren
 .github/workflows/validate.yml CI: JS-syntax, HTML-controles, shellscripts
+LICENSE                        MIT-licentietekst
 ```
 
 ## Licentie
 
-Geen licentiebestand toegevoegd; het project is in eigen beheer.
+MIT — zie [LICENSE](LICENSE). Je mag de code gebruiken, aanpassen en herverdelen, ook
+commercieel, zolang de auteursregel en de licentie tekst meegaan. Er is geen garantie.
+
+Copyright (c) 2026 Tom Werdens.

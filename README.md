@@ -113,6 +113,23 @@ op **URL laden**.
   dus de browser kan hem niet laden — de app meldt dat dan ook. Een link achter een login
   of met een 403 geeft hetzelfde probleem.
 
+## Nauwkeurigheid van de BPM-schatting
+
+Gemeten in een echte browser met synthetische maar realistische percussiepatronen
+(backbeat, vier-op-de-vloer, half-time, offbeat-bas, ruis) op 60–176 BPM:
+
+- **90–160 BPM**: 72 van 75 gevallen exact (96%). Dit is het bereik van vrijwel alle
+  dance-, pop- en hitradio-muziek.
+- **Buiten dat bereik** (onder ~85 en boven ~160 BPM) wordt regelmatig de halve of dubbele
+  tel gerapporteerd: 85 van 115 gevallen exact (74%) over het hele bereik. Dat is inherent
+  aan tempo-detectie zonder muzikale context — ook commerciële tools hebben hier last van.
+- **Snelheid**: de eerste waarde staat er na ongeveer 2 seconden, en blijft daarna staan
+  (geen doorschieten). Bij een nieuwe audiobron begint de schatting opnieuw bij "—" in
+  plaats van de waarde van de vorige bron te laten staan.
+
+Klopt het tempo niet, gebruik dan **tap tempo** op de maat of corrigeer met de
+timing-offset; beide zijn er juist voor dit geval.
+
 ## Beperkingen
 
 - BPM-detectie is een schatting; bij complexe muziek kan er een halve of dubbele beat

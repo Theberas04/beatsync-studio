@@ -262,7 +262,7 @@ video.addEventListener('error',()=>{const c=clips[Number(videoSelect.value)];if(
 
 async function ensureAudioContext(){if(!audioCtx||audioCtx.state==='closed')audioCtx=new (window.AudioContext||window.webkitAudioContext)();await audioCtx.resume();return audioCtx}
 function makeAnalyser(smoothing=.25){analyser=audioCtx.createAnalyser();analyser.fftSize=4096;analyser.smoothingTimeConstant=smoothing;return analyser}
-$('audioFile').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;if(audioUrl)URL.revokeObjectURL(audioUrl);audioUrl=URL.createObjectURL(f);const player=$('audioPlayer');player.src=audioUrl;player.style.display='block';try{await disconnect();await ensureAudioContext();if(!audioPlayerSource)audioPlayerSource=audioCtx.createMediaElementSource(player);source=audioPlayerSource;makeAnalyser(.2);source.connect(analyser);analyser.connect(audioCtx.destination);$('audioStatus').textContent='Lokaal audiofragment klaar voor afspelen en analyse.';$('audioStatus').className='status good';$('disconnect').disabled=false;player.onplay=()=>{if(!raf)analyze()};player.onended=()=>{if(raf)cancelAnimationFrame(raf);raf=null};}catch(err){$('audioStatus').textContent='Audio openen mislukt: '+err.message;$('audioStatus').className='status warn'}});
+$('audioFile').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;if(audioUrl)URL.revokeObjectURL(audioUrl);audioUrl=URL.createObjectURL(f);const player=$('audioPlayer');player.src=audioUrl;player.style.display='block';try{await disconnect();await ensureAudioContext();if(!audioPlayerSource)audioPlayerSource=audioCtx.createMediaElementSource(player);source=audioPlayerSource;resetTempoState();makeAnalyser(.2);source.connect(analyser);analyser.connect(audioCtx.destination);$('audioStatus').textContent='Lokaal audiofragment klaar voor afspelen en analyse.';$('audioStatus').className='status good';$('disconnect').disabled=false;player.onplay=()=>{if(!raf)analyze()};player.onended=()=>{if(raf)cancelAnimationFrame(raf);raf=null};}catch(err){$('audioStatus').textContent='Audio openen mislukt: '+err.message;$('audioStatus').className='status warn'}});
 function normalizeWebUrl(value){try{const u=new URL(value);return ['http:','https:'].includes(u.protocol)?u.href:null}catch{return null}}
 $('loadAudioUrl').onclick=async()=>{const u=normalizeWebUrl($('audioUrl').value);if(!u){$('audioStatus').textContent='Vul een geldige http(s)-audio-URL in.';$('audioStatus').className='status warn';return}const player=$('audioPlayer');if(audioUrl)URL.revokeObjectURL(audioUrl);audioUrl=null;player.src=u;player.style.display='block';try{await disconnect();await ensureAudioContext();if(!audioPlayerSource)audioPlayerSource=audioCtx.createMediaElementSource(player);source=audioPlayerSource;makeAnalyser(.2);source.connect(analyser);analyser.connect(audioCtx.destination);$('audioStatus').textContent='Audio-URL geladen. Afspelen start live analyse; server moet CORS-toegang toestaan.';$('audioStatus').className='status good';$('disconnect').disabled=false;player.onplay=()=>{if(!raf)analyze()};player.onended=()=>{if(raf)cancelAnimationFrame(raf);raf=null};player.onerror=()=>{$('audioStatus').textContent='Audio-URL kan niet worden afgespeeld. Controleer of dit een direct audiobestand is en of de server CORS toestaat.';$('audioStatus').className='status warn'};}catch(err){$('audioStatus').textContent='Audio-URL openen mislukt: '+err.message+' (mogelijk CORS-beperking).';$('audioStatus').className='status warn'}};
 function openStation(){const u=$('stationSelect').value;if(!u){$('audioStatus').textContent='Selecteer eerst een zender of website.';$('audioStatus').className='status warn';return}$('siteUrl').value=u;$('openSite').click()}
@@ -343,7 +343,7 @@ async function connectMicrophone(){
 $('connectMic').onclick=connectMicrophone;
 
 $('connectEmbedded').onclick=()=>{if(!$('siteFrame').src){$('audioStatus').textContent='Open eerst een radio of website in de ingebouwde browser.';$('audioStatus').className='status warn';return}connectSharedAudio(true)};
-async function disconnect(){if(raf)cancelAnimationFrame(raf);raf=null;if(stream)stream.getTracks().forEach(t=>t.stop());if(source){try{source.disconnect()}catch(e){}}stream=null;analyser=null;source=null;if(audioCtx&&!audioPlayerSource){await audioCtx.close();audioCtx=null}$('disconnect').disabled=true;$('audioStatus').textContent='Audioverbinding verbroken.';$('level').style.width='0%';$('volume').textContent='0%';$('vuFill').style.width='0%';$('vuReadout').textContent='−∞ dB';$('peakReadout').textContent='−∞';$('rmsReadout').textContent='−∞';$('eqStatus').textContent='Wacht op audio…';$('loudMoment').textContent='—';$('loudShort').textContent='—';$('driftReadout').textContent='—';$('driftRange').textContent='wacht op BPM';const c=$('eqCanvas');if(c){const x=c.getContext('2d');x&&x.clearRect(0,0,c.width,c.height);}}
+async function disconnect(){if(raf)cancelAnimationFrame(raf);raf=null;resetTempoState();if(stream)stream.getTracks().forEach(t=>t.stop());if(source){try{source.disconnect()}catch(e){}}stream=null;analyser=null;source=null;if(audioCtx&&!audioPlayerSource){await audioCtx.close();audioCtx=null}$('disconnect').disabled=true;$('audioStatus').textContent='Audioverbinding verbroken.';$('level').style.width='0%';$('volume').textContent='0%';$('vuFill').style.width='0%';$('vuReadout').textContent='−∞ dB';$('peakReadout').textContent='−∞';$('rmsReadout').textContent='−∞';$('eqStatus').textContent='Wacht op audio…';$('loudMoment').textContent='—';$('loudShort').textContent='—';$('driftReadout').textContent='—';$('driftRange').textContent='wacht op BPM';const c=$('eqCanvas');if(c){const x=c.getContext('2d');x&&x.clearRect(0,0,c.width,c.height);}}
 $('disconnect').onclick=disconnect;
 
 let lastFlux=0, fluxHistory=[], onsetTimes=[], lastOnset=0, bpmSmooth=null, peakHold=0, eqCtx=null;
@@ -366,17 +366,29 @@ function estimateBpm(now){
  for(let i=0;i<N;i++)x[i]-=mean;
  const minLag=Math.round(rate*0.30), maxLag=Math.min(Math.round(rate*1.45), N-60);
  if(maxLag<=minLag+4)return;
- let bestLag=0,bestVal=-1e9;
- for(let lag=minLag;lag<=maxLag;lag++){
-  const n2=N-lag; if(n2<60)continue;
+ const acf=new Float32Array(maxLag+1);
+ for(let lag=1;lag<=maxLag;lag++){
+  const n2=N-lag; if(n2<60){acf[lag]=0;continue}
   let acc=0; for(let i=0;i<n2;i++)acc+=x[i]*x[i+lag];
-  acc/=n2;
-  if(acc>bestVal){bestVal=acc;bestLag=lag}
+  acf[lag]=acc/n2;
  }
- if(!bestLag||bestVal<=0)return;
+ let peakVal=-1e9;
+ for(let lag=minLag;lag<=maxLag;lag++)if(acf[lag]>peakVal)peakVal=acf[lag];
+ if(!(peakVal>0))return;
+ // Eerste sterke piek, niet het globale maximum: bij complexe muziek ligt het maximum
+ // soms op een veelvoud van de tel (spookpiek), terwijl de echte tel eerder zit.
+ const thr=peakVal*0.9;
+ let bestLag=0;
+ for(let lag=minLag+1;lag<maxLag;lag++){
+  if(acf[lag]>=acf[lag-1]&&acf[lag]>=acf[lag+1]&&acf[lag]>=thr){bestLag=lag;break}
+ }
+ if(!bestLag)return;
+ let L=bestLag;
+ const pa=acf[bestLag-1], pb=acf[bestLag], pc=acf[bestLag+1], pden=pa-2*pb+pc;
+ if(pden!==0){const off=0.5*(pa-pc)/pden;if(Math.abs(off)<=0.5)L=bestLag+off}
  // De sterkste periodiciteit is in de praktijk twee tellen (kick/snare-patroon),
  // daarom rekenen we met twee tellen per periode en normaliseren we daarna het octaaf.
- let candidate=120*rate/bestLag;
+ let candidate=120*rate/L;
  while(candidate<70)candidate*=2;
  while(candidate>=180)candidate/=2;
  if(!(candidate>=55&&candidate<=200))return;
@@ -437,6 +449,16 @@ function loudness(data){
  const moment=mr>0?20*Math.log10(mr)-0.691:-Infinity;
  let ss=0;for(const p of loudHistory)ss+=p.rms*p.rms;const sr=Math.sqrt(ss/Math.max(1,loudHistory.length));const short=sr>0?20*Math.log10(sr)-0.691:-Infinity;
  $('loudMoment').textContent=Number.isFinite(moment)?moment.toFixed(1):'−∞';$('loudShort').textContent=Number.isFinite(short)?short.toFixed(1):'−∞';
+}
+// Nieuwe bron: oude tempo-schatting niet laten staan (die hoort bij de vorige audio).
+function resetTempoState(){
+ env=[];fluxHistory=[];onsetTimes=[];bpmHistory=[];bpmTrace=[];loudHistory=[];
+ bpmSmooth=null;fastPrev=null;baseBpm=null;changeCandidate=null;changeCount=0;changeTotal=0;
+ lastFlux=0;lastOnset=0;lastBpmTry=0;lastSpecAt=0;peakHold=0;
+ $('detected').textContent='—';
+ $('driftReadout').textContent='—';$('driftRange').textContent='wacht op BPM';
+ $('tempoChanges').textContent='0';$('tempoAlert').textContent='geen afwijking';$('tempoAlert').style.color='';
+ $('loudMoment').textContent='—';$('loudShort').textContent='—';
 }
 function dbfs(v){return v>0?20*Math.log10(v):-Infinity}
 function drawLiveMeters(data){

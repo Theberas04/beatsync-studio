@@ -127,6 +127,11 @@ Gemeten in een echte browser met synthetische maar realistische percussiepatrone
   (geen doorschieten). Bij een nieuwe audiobron begint de schatting opnieuw bij "—" in
   plaats van de waarde van de vorige bron te laten staan.
 
+De waarde wordt **vastgezet** zodra de schatting zeven metingen lang binnen 3 BPM blijft:
+daarna staat het getal stil (label "BPM · vast") in plaats van bij elke meting een tiende te
+verschuiven. Verandert het tempo echt, dan laat de meter los, meet opnieuw en zet weer vast
+— gemeten: 120 → 128 BPM werd na circa 4 seconden als nieuwe vaste waarde overgenomen.
+
 Klopt het tempo niet, gebruik dan **tap tempo** op de maat of corrigeer met de
 timing-offset; beide zijn er juist voor dit geval.
 

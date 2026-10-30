@@ -348,6 +348,8 @@ $('disconnect').onclick=disconnect;
 
 let lastFlux=0, fluxHistory=[], onsetTimes=[], lastOnset=0, bpmSmooth=null, peakHold=0, eqCtx=null;
 let env=[], lastBpmTry=0, bpmHistory=[], fastPrev=null, bpmTrace=[], baseBpm=null, changeCandidate=null, changeCount=0, changeTotal=0, loudHistory=[], lastSpecAt=0;
+let lockBpm=null, lockWindow=[], lockMiss=0; // vastgezette schatting
+const LOCK_TOL=3; // BPM: spreiding waarbinnen de schatting als vast geldt
 function estimateBpm(now){
  if(env.length<30)return;
  const span=(env[env.length-1].t-env[0].t)/1000;
@@ -400,17 +402,47 @@ function estimateBpm(now){
    // twee keer achter elkaar ongeveer hetzelfde? dan pas publiceren
    if(fastPrev===null||Math.abs(candidate-fastPrev)>3){fastPrev=candidate;return}
  }
- bpmHistory.push(candidate); if(bpmHistory.length>5)bpmHistory.shift();
+ bpmHistory.push(candidate); if(bpmHistory.length>7)bpmHistory.shift();
  const sorted=[...bpmHistory].sort((a,b)=>a-b);
  const med=sorted[Math.floor(sorted.length/2)];
- const alpha=bpmSmooth===null?1:(bpmHistory.length<3?0.6:0.3);
+ const alpha=bpmSmooth===null?1:(bpmHistory.length<3?0.6:0.25);
  bpmSmooth=bpmSmooth===null?med:bpmSmooth*(1-alpha)+med*alpha;
- const shown=Math.round(bpmSmooth);
+
+ // Vastzetten: als de schatting een tijdje binnen een paar BPM blijft, is dat het tempo.
+ // Daarna staat de waarde stil in plaats van bij elke meting een tiende te verschuiven.
+ // Alleen een aanhoudende afwijking van meer dan LOCK_TOL BPM laat hem weer los.
+ if(lockBpm===null){
+  lockWindow.push(candidate);
+  if(lockWindow.length>7)lockWindow.shift();
+  if(lockWindow.length===7){
+   const lo=Math.min(...lockWindow), hi=Math.max(...lockWindow);
+   if(hi-lo<=LOCK_TOL){
+    const s2=[...lockWindow].sort((a,b)=>a-b);
+    lockBpm=Math.round(s2[3]);
+   }
+  }
+ }else{
+  if(Math.abs(candidate-lockBpm)>LOCK_TOL){
+   lockMiss++;
+   if(lockMiss>=8){lockBpm=null;lockMiss=0;lockWindow=[];bpmHistory=[];bpmSmooth=candidate}
+  }else lockMiss=0;
+ }
+
+ const shown=lockBpm!==null?lockBpm:Math.round(bpmSmooth);
  if($('detected').textContent!==String(shown)){
   $('detected').textContent=String(shown);
-  $('detected').title='Live schatting uit de energie-envelop; wordt een paar keer per seconde bijgesteld';
+  $('detected').title=lockBpm!==null
+   ?'Vastgezet: de schatting bleef binnen '+LOCK_TOL+' BPM. Bij een echte tempowissel gaat de meter weer meten.'
+   :'Live schatting uit de energie-envelop; wordt een paar keer per seconde bijgesteld';
   $('targetBpm').value=String(shown);
   applyLiveSpeed();
+ }
+ if(lockBpm!==null&&$('detected').dataset.locked!=='1'){
+  $('detected').dataset.locked='1';
+  const em=$('detected').nextElementSibling; if(em)em.textContent='BPM · vast';
+ }else if(lockBpm===null&&$('detected').dataset.locked==='1'){
+  delete $('detected').dataset.locked;
+  const em=$('detected').nextElementSibling; if(em)em.textContent='BPM (schatting)';
  }
 }
 function recordBpm(bpm,now){
@@ -453,9 +485,10 @@ function loudness(data){
 // Nieuwe bron: oude tempo-schatting niet laten staan (die hoort bij de vorige audio).
 function resetTempoState(){
  env=[];fluxHistory=[];onsetTimes=[];bpmHistory=[];bpmTrace=[];loudHistory=[];
- bpmSmooth=null;fastPrev=null;baseBpm=null;changeCandidate=null;changeCount=0;changeTotal=0;
+ bpmSmooth=null;fastPrev=null;lockBpm=null;lockWindow=[];lockMiss=0;baseBpm=null;changeCandidate=null;changeCount=0;changeTotal=0;
  lastFlux=0;lastOnset=0;lastBpmTry=0;lastSpecAt=0;peakHold=0;
- $('detected').textContent='—';
+ $('detected').textContent='—';delete $('detected').dataset.locked;
+ const em0=$('detected').nextElementSibling;if(em0)em0.textContent='BPM (schatting)';
  $('driftReadout').textContent='—';$('driftRange').textContent='wacht op BPM';
  $('tempoChanges').textContent='0';$('tempoAlert').textContent='geen afwijking';$('tempoAlert').style.color='';
  $('loudMoment').textContent='—';$('loudShort').textContent='—';
